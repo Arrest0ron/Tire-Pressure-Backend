@@ -1,0 +1,71 @@
+<html lang="rus">
+    <head>
+        <title>Заявка на расчёт</title>
+        <link rel="stylesheet" href="/static/styles/index_style.css">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/tires">Домой</a>
+            </h1>
+        </header>
+        
+        <main class="main-content">
+            <h2 style="margin-bottom: 20px; color: #333;">Заявка на расчёт давления</h2>
+
+            <form action="/calculation" method="GET" class="calculation-form">
+                <h3>Параметры расчёта</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Температура (°C):</label>
+                        <input type="number" name="temperature" value="{{ .temperature }}" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Вес автомобиля (кг):</label>
+                        <input type="number" name="weight" value="{{ .weight }}" min="500" max="5000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Тип покрытия:</label>
+                        <select name="surface">
+                            <option value="1.0" {{ if eq .surface 1.0 }}selected{{ end }}>Асфальт</option>
+                            <option value="0.9" {{ if eq .surface 0.9 }}selected{{ end }}>Гравий</option>
+                            <option value="0.8" {{ if eq .surface 0.8 }}selected{{ end }}>Снег</option>
+                            <option value="0.7" {{ if eq .surface 0.7 }}selected{{ end }}>Лёд</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="device-btn">Пересчитать</button>
+                </div>
+            </form>
+
+            <div class="devices-grid">
+                {{ range .request_tires }}
+                <div class="device-card">
+                    <div class="device-left">
+                        <img src="http://localhost:9000/test/{{ .Tire.Photo }}" alt="{{ .Tire.Title }}">
+                    </div>
+                    <div class="device-info">
+                        <span class="device-type">{{ .Tire.Type }}</span>
+                        <span class="device-size">{{ .Tire.Width }}/{{ .Tire.Profile }} R{{ .Tire.Diameter }}</span>
+                        <h3 class="device-title">{{ .Tire.Title }}</h3>
+                        <span class="device-pressure">Базовое давление: {{ .Tire.BasePressure }} бар</span>
+                        <span class="device-pressure" style="color: #ea5fac;">Рассчитанное давление: {{ .Pressure | printf "%.1f" }} бар</span>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="result">
+                <h3>Среднее рекомендуемое давление: <span class="pressure-value">{{ .recommendedPressure | printf "%.1f" }}</span> бар</h3>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="device-btn">Оформить заявку</button>
+                <button type="button" class="device-btn-outline">Удалить заявку</button>
+            </div>
+        </main>
+
+        <a href="/calculation" class="cart-btn">
+            <img src="/static/img/tire.svg" alt="Заявка">
+        </a>
+    </body>
+</html>

@@ -1,0 +1,368 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    color: #000000; 
+}
+
+body{
+    background: #f1f1f1;
+}
+
+header{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 90px;
+    background-color: #fafafa;
+    height: 90px;
+    width: 100%;
+    border-bottom: 1px solid #e8e8ec;
+}
+
+header input{
+    border-radius: 12px;
+    border: 2px solid #E8E8EC;
+    font-size: 16px;
+    padding: 12px 15px;
+    width: 400px;
+    outline: none;
+}
+
+header input:focus{
+    border-color: #ed1c24;
+}
+
+header button{
+    background-color: #ed1c24;
+    border-radius: 6px;
+    border: none;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+header button:hover{
+    background-color: #c7181e;
+}
+
+header button:active{
+    background-color: #a01418;
+}
+
+.main-content{
+    width: 100%;
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.devices-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.device-card{
+    background: white;
+    border: 1px solid #6b6b6b;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    height: 160px;
+}
+
+.device-left{
+    width: 200px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.device-left img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.device-info{
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+}
+
+.device-type{
+    font-size: 11px;
+    font-weight: 600;
+    color: #ed1c24;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.device-size{
+    font-size: 12px;
+    color: #999;
+}
+
+.device-power{
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.device-pressure{
+    font-size: 12px;
+    color: #666;
+}
+
+.device-title{
+    font-size: 14px;
+    font-weight: 700;
+    color: rgb(10, 95, 172);
+    line-height: 1.4;
+    transition: color 0.3s ease;
+}
+
+.device-title:hover{
+    color: #ed1c24;
+    cursor: pointer;
+}
+
+.device-btn{
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    background-color: #ed1c24;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.device-btn:hover{
+    background-color: #c7181e;
+}
+
+.device-btn:active{
+    background-color: #a01418;
+}
+
+.cart-btn{
+    position: fixed;
+    left: 50px;
+    bottom: 50px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid #ed1c24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.cart-btn img{
+    width: 50px;
+    height: 50px;
+}
+
+.cart-count{
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ed1c24;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Order page styles */
+.order-card{
+    display: flex;
+    gap: 30px;
+    background: white;
+    border: 1px solid #6b6b6b;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.order-card .device-image{
+    width: 200px;
+    height: 160px;
+    flex-shrink: 0;
+}
+
+.order-details{
+    flex: 1;
+}
+
+.order-details h1{
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.order-details p{
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.order-details strong{
+    color: #333;
+}
+
+/* Calculation form */
+.calculation-form{
+    background: white;
+    border: 1px solid #6b6b6b;
+    border-radius: 6px;
+    padding: 25px;
+    margin-bottom: 30px;
+    margin-top: 30px;
+}
+
+.calculation-form h2{
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.calculation-form h3{
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.form-group{
+    margin-bottom: 15px;
+}
+
+.form-group label{
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select{
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e8e8ec;
+    border-radius: 6px;
+    font-size: 16px;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus{
+    border-color: #ed1c24;
+}
+
+.form-row{
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.form-row .form-group{
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-row .form-group:last-child{
+    flex: 0;
+    margin-bottom: 0;
+}
+
+.form-row .form-group:last-child .device-btn{
+    width: 120px;
+    height: 42px;
+    font-size: 14px;
+}
+
+.result{
+    background: #25282a;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.result h3{
+    color: #ffffff;
+    font-size: 18px;
+}
+
+.pressure-value{
+    color: #ea5fac;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Cart items */
+.cart-items{
+    margin-bottom: 30px;
+}
+
+.cart-items .order-card{
+    margin-bottom: 15px;
+}
+
+.cart-items .device-image{
+    width: 150px;
+    height: 120px;
+}
+
+.calculated-pressure{
+    color: #ea5fac !important;
+    font-size: 16px !important;
+    margin-top: 10px !important;
+}
+
+.actions{
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.device-btn-outline{
+    display: block;
+    padding: 12px 30px;
+    background-color: white;
+    color: #ed1c24;
+    text-align: center;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border: 2px solid #ed1c24;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.device-btn-outline:hover{
+    background-color: #fff5f5;
+}

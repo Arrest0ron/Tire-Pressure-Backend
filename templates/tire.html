@@ -1,0 +1,66 @@
+<html lang="rus">
+    <head>
+        <title>Расчёт давления</title>
+        <link rel="stylesheet" href="/static/styles/index_style.css">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/tires">Домой</a>
+            </h1>
+        </header>
+        
+        <main class="main-content">
+            <div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto 20px auto;">
+                <video autoplay muted controls style="width: 100%; border-radius: 6px;">
+                    <source src="http://localhost:9000/test/{{ .tire.Video }}" type="video/mp4">
+                    Ваш браузер не поддерживает видео.
+                </video>
+                <div class="device-card" style="position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.95); border-radius: 6px; height: auto; flex-direction: column;">
+                    <div class="device-left" style="width: 100%; height: 150px;">
+                        <img src="http://localhost:9000/test/{{ .tire.Photo }}" alt="{{ .tire.Title }}">
+                    </div>
+                    <div class="device-info">
+                        <span class="device-type">{{ .tire.Type }}</span>
+                        <span class="device-size">{{ .tire.Width }}/{{ .tire.Profile }} R{{ .tire.Diameter }}</span>
+                        <h3 class="device-title">{{ .tire.Title }}</h3>
+                        <p class="device-pressure">{{ .tire.Description }}</p>
+                        <p class="device-pressure">Базовое давление: {{ .tire.BasePressure }} бар</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculation-form">
+                <h2>Расчёт оптимального давления</h2>
+                <form action="/tire/{{ .tire.ID }}" method="GET">
+                    <div class="form-group">
+                        <label>Температура (°C):</label>
+                        <input type="number" name="temperature" value="{{ .temperature }}" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Вес автомобиля с нагрузкой (кг):</label>
+                        <input type="number" name="weight" value="{{ .weight }}" min="500" max="5000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Тип покрытия:</label>
+                        <select name="surface">
+                            <option value="1.0" {{ if eq .surface 1.0 }}selected{{ end }}>Асфальт</option>
+                            <option value="0.9" {{ if eq .surface 0.9 }}selected{{ end }}>Гравий</option>
+                            <option value="0.8" {{ if eq .surface 0.8 }}selected{{ end }}>Снег</option>
+                            <option value="0.7" {{ if eq .surface 0.7 }}selected{{ end }}>Лёд</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="device-btn">Рассчитать</button>
+                </form>
+
+                <div class="result">
+                    <h3>Рекомендуемое давление: <span class="pressure-value">{{ .recommendedPressure | printf "%.1f" }}</span> бар</h3>
+                </div>
+            </div>
+        </main>
+
+        <a href="/calculation" class="cart-btn">
+            <img src="/static/img/tire.svg" alt="Заявка">
+        </a>
+    </body>
+</html>

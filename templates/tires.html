@@ -1,0 +1,44 @@
+<html lang="rus">
+    <head>
+        <title>Давление в шинах</title>
+        <link rel="stylesheet" href="/static/styles/index_style.css">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/tires">Домой</a>
+            </h1>
+            <form action="/tires" method="GET">
+                <input type="text" name="query" placeholder="Поиск шин" value="{{ .query }}">
+                <button type="submit">🔎</button>
+            </form>
+        </header>
+        
+        <main class="main-content">
+            <h2 style="margin-bottom: 20px; color: #333;">Типы шин</h2>
+            <div class="devices-grid">
+                {{ range .tires }}
+                <div class="device-card">
+                    <div class="device-left">
+                        <img src="http://localhost:9000/test/{{ .Photo }}" alt="{{ .Title }}">
+                    </div>
+                    <div class="device-info">
+                        <span class="device-type">{{ .Type }}</span>
+                        <span class="device-size">{{ .Width }}/{{ .Profile }} R{{ .Diameter }}</span>
+                        <h3 class="device-title">{{ .Title }}</h3>
+                        <span class="device-pressure">Базовое давление: {{ .BasePressure }} бар</span>
+                        <a href="/tire/{{ .ID }}" class="device-btn">Подробнее</a>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </main>
+
+        <a href="/calculation" class="cart-btn">
+            <img src="/static/img/tire.svg" alt="Заявка">
+            {{ if .cartCount }}
+                <span class="cart-count">{{ .cartCount }}</span>
+            {{ end }}
+        </a>
+    </body>
+</html>
