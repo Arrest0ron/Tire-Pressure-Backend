@@ -1,9 +1,10 @@
 package api
 
 import (
-	"log"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"log"
+	"web_backend/internal/app/h
 	"web_backend/internal/app/handler"
 	"web_backend/internal/app/repository"
 )
@@ -18,7 +19,7 @@ func StartServer() {
 
 	handler := handler.NewHandler(repo)
 
-	r := gin.Default()
+
 	
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./resources")
@@ -28,7 +29,7 @@ func StartServer() {
 	})
 	r.GET("/tires", handler.GetTires)
 	r.GET("/tire/:id", handler.GetTire)
-	r.GET("/calculation", handler.GetCalculation)
+	r.GET("/calculation/:id", handler.GetCalculation)
 
 	r.Run()
 	log.Println("Server down")

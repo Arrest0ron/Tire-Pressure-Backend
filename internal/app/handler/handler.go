@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"web_backend/internal/app/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
+	
 )
 
 type Handler struct {
@@ -18,6 +18,7 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
+// GetTires - GET /tires - список шин с поиском
 func (h *Handler) GetTires(ctx *gin.Context) {
 	var tires []repository.Tire
 	var err error
@@ -35,10 +36,11 @@ func (h *Handler) GetTires(ctx *gin.Context) {
 		}
 	}
 
-	cartTires, err := h.Repository.GetRequest()
+	// Подсчёт количества услуг в заявке (берём заявку с ID=1 по умолчанию)
+	request, err := h.Repository.GetRequestByID(1)
 	cartCount := 0
 	if err == nil {
-		cartCount = len(cartTires)
+		cartCount = len(request.TireIDs)
 	}
 
 	ctx.HTML(http.StatusOK, "tires.html", gin.H{
@@ -48,6 +50,7 @@ func (h *Handler) GetTires(ctx *gin.Context) {
 	})
 }
 
+// GetTire - GET /tire/:id - детали шины
 func (h *Handler) GetTire(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
@@ -61,7 +64,6 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	// Get calculation parameters from query or use defaults
 	temperature := ctx.DefaultQuery("temperature", "20")
 	weight := ctx.DefaultQuery("weight", "1500")
 	surface := ctx.DefaultQuery("surface", "1.0")
@@ -70,70 +72,59 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 	weightVal, _ := strconv.ParseFloat(weight, 64)
 	surfaceVal, _ := strconv.ParseFloat(surface, 64)
 
-	// Calculate recommended pressure
 	recommendedPressure := repository.CalculatePressure(tire.BasePressure, tempVal, weightVal, surfaceVal)
 
 	ctx.HTML(http.StatusOK, "tire.html", gin.H{
-		"tire":               tire,
-		"temperature":        tempVal,
-		"weight":             weightVal,
-		"surface":            surfaceVal,
+		"tire":                tire,
+		"temperature":         tempVal,
+		"weight":              weightVal,
+		"surface":             surfaceVal,
 		"recommendedPressure": recommendedPressure,
 	})
 }
 
+// GetCalculation - GET /calculation/:id - заявка по ID
 func (h *Handler) GetCalculation(ctx *gin.Context) {
-	var tires []repository.Tire
-	var err error
+	idStr := ctx.Param("id")
 
-	tires, err = h.Repository.GetRequest()
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	// Get form values for pressure calculation
-	temperature := ctx.PostForm("temperature")
-	weight := ctx.PostForm("weight")
-	surface := ctx.PostForm("surface")
-
-	tempVal := 20.0
-	weightVal := 1500.0
-	surfaceVal := 1.0
-
-	if temperature != "" {
-		if t, err := strconv.ParseFloat(temperature, 64); err == nil {
-			tempVal = t
-		}
-	}
-	if weight != "" {
-		if w, err := strconv.ParseFloat(weight, 64); err == nil {
-			weightVal = w
-		}
-	}
-	if surface != "" {
-		if s, err := strconv.ParseFloat(surface, 64); err == nil {
-			surfaceVal = s
-		}
+	// Получаем заявку по ID из словаря
+	request, err := h.Repository.GetRequestByID(id)
+	if err != nil {
+		logrus.Error(err)
+		ctx.String(http.StatusNotFound, "Заявка не найдена")
+		return
 	}
 
-	// Calculate pressure for each tire in request
+	// Получаем шины для этой заявки
+	tires, err := h.Repository.GetRequestTires(id)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	// Вычисляем давление для каждой шины
 	type TireWithPressure struct {
-		Tire       repository.Tire
-		Pressure   float64
+		Tire     repository.Tire
+		Pressure float64
 	}
 	tiresWithPressure := make([]TireWithPressure, len(tires))
 	for i, tire := range tires {
 		tiresWithPressure[i] = TireWithPressure{
 			Tire:     tire,
-			Pressure: repository.CalculatePressure(tire.BasePressure, tempVal, weightVal, surfaceVal),
+			Pressure: repository.CalculatePressure(tire.BasePressure, request.Temperature, request.Weight, request.Surface),
 		}
 	}
 
 	ctx.HTML(http.StatusOK, "calculation.html", gin.H{
-		"request_tires":      tiresWithPressure,
-		"temperature":       tempVal,
-		"weight":            weightVal,
-		"surface":           surfaceVal,
-		"recommendedPressure": repository.CalculatePressure(2.2, tempVal, weightVal, surfaceVal),
+		"request":             request,
+		"request_tires":       tiresWithPressure,
+		"temperature":         request.Temperature,
+		"weight":              request.Weight,
+		"surface":             request.Surface,
+		"recommendedPressure": request.Result,
 	})
 }

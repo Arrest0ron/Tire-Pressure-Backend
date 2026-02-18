@@ -23,6 +23,17 @@ type Tire struct {
 	Video        string
 	Description  string
 	BasePressure float64 // base pressure in bar
+	MM           string  // количество/порядок/главный/комментарий
+}
+
+// Request - структура заявки (словарь)
+type Request struct {
+	ID          int
+	TireIDs     []int // список ID шин в заявке
+	Temperature float64
+	Weight      float64
+	Surface     float64
+	Result      float64 // результат вычислений
 }
 
 func (r *Repository) GetTires() ([]Tire, error) {
@@ -38,6 +49,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Летняя шина для спортивных автомобилей",
 			BasePressure: 2.2,
+			MM:           "4 шт., основная",
 		},
 		{
 			ID:           2,
@@ -50,6 +62,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Зимняя шина с отличным сцеплением на льду",
 			BasePressure: 2.3,
+			MM:           "4 шт.",
 		},
 		{
 			ID:           3,
@@ -62,6 +75,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Всесезонная шина для умеренного климата",
 			BasePressure: 2.2,
+			MM:           "4 шт.",
 		},
 		{
 			ID:           4,
@@ -74,6 +88,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Летняя шина для мощных седанов",
 			BasePressure: 2.3,
+			MM:           "4 шт.",
 		},
 		{
 			ID:           5,
@@ -86,6 +101,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Зимняя шина для суровых зим",
 			BasePressure: 2.4,
+			MM:           "2 шт., задняя ось",
 		},
 		{
 			ID:           6,
@@ -98,6 +114,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Всесезонная шина премиум класса",
 			BasePressure: 2.2,
+			MM:           "4 шт.",
 		},
 		{
 			ID:           7,
@@ -110,6 +127,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Спортивная летняя шина",
 			BasePressure: 2.4,
+			MM:           "4 шт.",
 		},
 		{
 			ID:           8,
@@ -122,6 +140,7 @@ func (r *Repository) GetTires() ([]Tire, error) {
 			Video:        "edit.mp4",
 			Description:  "Зимняя шина для городских автомобилей",
 			BasePressure: 2.1,
+			MM:           "4 шт.",
 		},
 	}
 	if len(tires) == 0 {
@@ -129,6 +148,33 @@ func (r *Repository) GetTires() ([]Tire, error) {
 	}
 
 	return tires, nil
+}
+
+// GetRequests - словарь заявок (вторая коллекция)
+func (r *Repository) GetRequests() (map[int]Request, error) {
+	requests := map[int]Request{
+		1: {
+			ID:          1,
+			TireIDs:     []int{1, 5},
+			Temperature: 20,
+			Weight:      1500,
+			Surface:     1.0,
+			Result:      2.2,
+		},
+		2: {
+			ID:          2,
+			TireIDs:     []int{2, 4},
+			Temperature: 15,
+			Weight:      1800,
+			Surface:     0.9,
+			Result:      2.4,
+		},
+	}
+	if len(requests) == 0 {
+		return nil, fmt.Errorf("Словарь пустой")
+	}
+
+	return requests, nil
 }
 
 func (r *Repository) GetTire(id int) (Tire, error) {
@@ -160,48 +206,64 @@ func (r *Repository) GetTireByTitle(title string) ([]Tire, error) {
 	return result, nil
 }
 
-func (r *Repository) GetRequest() ([]Tire, error) {
+// GetRequestByID - получить заявку по ID из словаря
+func (r *Repository) GetRequestByID(id int) (Request, error) {
+	requests, err := r.GetRequests()
+	if err != nil {
+		return Request{}, err
+	}
+
+	request, exists := requests[id]
+	if !exists {
+		return Request{}, fmt.Errorf("Заявка не найдена")
+	}
+
+	return request, nil
+}
+
+// GetRequestTires - получить шины для конкретной заявки
+func (r *Repository) GetRequestTires(requestID int) ([]Tire, error) {
+	request, err := r.GetRequestByID(requestID)
+	if err != nil {
+		return []Tire{}, err
+	}
+
 	tires, err := r.GetTires()
 	if err != nil {
 		return []Tire{}, err
 	}
 
 	var result []Tire
-	for _, tire := range tires {
-		if tire.ID == 1 || tire.ID == 5 {
-			result = append(result, tire)
+	for _, tireID := range request.TireIDs {
+		for _, tire := range tires {
+			if tire.ID == tireID {
+				result = append(result, tire)
+				break
+			}
 		}
 	}
 
 	if len(result) == 0 {
-		return nil, fmt.Errorf("Массив пустой")
+		return nil, fmt.Errorf("Заявка пуста")
 	}
 
 	return result, nil
 }
 
-// CalculatePressure calculates optimal tire pressure based on parameters
-// temperature: ambient temperature in Celsius
-// weight: vehicle weight with load in kg
-// surfaceCoeff: road surface coefficient (asphalt=1.0, gravel=0.9, snow=0.8, ice=0.7)
+// CalculatePressure - рассчитать давление
 func CalculatePressure(basePressure float64, temperature float64, weight float64, surfaceCoeff float64) float64 {
-	// Temperature adjustment: +0.1 bar per 10°C below 20°C
 	tempDiff := 20.0 - temperature
-	tempAdjustment := tempDiff * 0.01 // 0.01 bar per 1°C
+	tempAdjustment := tempDiff * 0.01
 
-	// Weight adjustment: base is 1500kg, +0.1 bar per 500kg over
 	weightAdjustment := 0.0
 	if weight > 1500 {
 		weightAdjustment = (weight - 1500) / 500 * 0.1
 	}
 
-	// Surface coefficient adjustment
 	surfaceAdjustment := (1.0 - surfaceCoeff) * 0.2
 
-	// Calculate final pressure
 	pressure := basePressure + tempAdjustment + weightAdjustment - surfaceAdjustment
 
-	// Keep pressure in reasonable range (1.8 - 3.0 bar)
 	if pressure < 1.8 {
 		pressure = 1.8
 	}
