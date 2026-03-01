@@ -5,7 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
-	
+	"web_backend/internal/app/repository"
 )
 
 type Handler struct {
@@ -36,7 +36,7 @@ func (h *Handler) GetTires(ctx *gin.Context) {
 		}
 	}
 
-	// Подсчёт количества услуг в заявке (берём заявку с ID=1 по умолчанию)
+	// Подсчёт количества услуг в заявке
 	request, err := h.Repository.GetRequestByID(1)
 	cartCount := 0
 	if err == nil {
@@ -72,7 +72,7 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 	weightVal, _ := strconv.ParseFloat(weight, 64)
 	surfaceVal, _ := strconv.ParseFloat(surface, 64)
 
-	recommendedPressure := repository.CalculatePressure(tire.BasePressure, tempVal, weightVal, surfaceVal)
+	recommendedPressure := repository.CalculatePressure(tire.TireCoefficient, tempVal, weightVal, surfaceVal)
 
 	ctx.HTML(http.StatusOK, "tire.html", gin.H{
 		"tire":                tire,
@@ -83,13 +83,15 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 	})
 }
 
-// GetCalculation - GET /calculation/:id - заявка по ID
-func (h *Handler) GetCalculation(ctx *gin.Context) {
+// GetTirePressure - GET /tire_pressure/:id - заявка по ID
+func (h *Handler) GetTirePressure(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logrus.Error(err)
+		ctx.String(http.StatusBadRequest, "Неверный ID заявки")
+		return
 	}
 
 	// Получаем заявку по ID из словаря
@@ -104,6 +106,14 @@ func (h *Handler) GetCalculation(ctx *gin.Context) {
 	tires, err := h.Repository.GetRequestTires(id)
 	if err != nil {
 		logrus.Error(err)
+		ctx.String(http.StatusNotFound, "Заявка пуста")
+		return
+	}
+
+	// Логируем количество шин для отладки
+	logrus.Infof("Заявка %d: найдено %d шин", id, len(tires))
+	for i, tire := range tires {
+		logrus.Infof("Шина %d: ID=%d, Title=%s", i+1, tire.ID, tire.Title)
 	}
 
 	// Вычисляем давление для каждой шины
@@ -115,16 +125,16 @@ func (h *Handler) GetCalculation(ctx *gin.Context) {
 	for i, tire := range tires {
 		tiresWithPressure[i] = TireWithPressure{
 			Tire:     tire,
-			Pressure: repository.CalculatePressure(tire.BasePressure, request.Temperature, request.Weight, request.Surface),
+			Pressure: repository.CalculatePressure(tire.TireCoefficient, request.AirTemperature, request.CarWeight, request.SurfaceCoefficient),
 		}
 	}
 
-	ctx.HTML(http.StatusOK, "calculation.html", gin.H{
+	ctx.HTML(http.StatusOK, "tire_pressure.html", gin.H{
 		"request":             request,
 		"request_tires":       tiresWithPressure,
-		"temperature":         request.Temperature,
-		"weight":              request.Weight,
-		"surface":             request.Surface,
-		"recommendedPressure": request.Result,
+		"temperature":         request.AirTemperature,
+		"weight":              request.CarWeight,
+		"surface":             request.SurfaceCoefficient,
+		"recommendedPressure": request.PressureResult,
 	})
 }

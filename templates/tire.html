@@ -1,66 +1,55 @@
-<html lang="rus">
-    <head>
-        <title>Расчёт давления</title>
-        <link rel="stylesheet" href="/static/styles/index_style.css">
-    </head>
-    <body>
-        <header>
-            <h1>
-                <a href="/tires">Домой</a>
-            </h1>
-        </header>
-        
-        <main class="main-content">
-            <div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto 20px auto;">
-                <video autoplay muted controls style="width: 100%; border-radius: 6px;">
-                    <source src="http://localhost:9000/test/{{ .tire.Video }}" type="video/mp4">
-                    Ваш браузер не поддерживает видео.
-                </video>
-                <div class="device-card" style="position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.95); border-radius: 6px; height: auto; flex-direction: column;">
-                    <div class="device-left" style="width: 100%; height: 150px;">
-                        <img src="http://localhost:9000/test/{{ .tire.Photo }}" alt="{{ .tire.Title }}">
-                    </div>
-                    <div class="device-info">
-                        <span class="device-type">{{ .tire.Type }}</span>
-                        <span class="device-size">{{ .tire.Width }}/{{ .tire.Profile }} R{{ .tire.Diameter }}</span>
-                        <h3 class="device-title">{{ .tire.Title }}</h3>
-                        <p class="device-pressure">{{ .tire.Description }}</p>
-                        <p class="device-pressure">Базовое давление: {{ .tire.BasePressure }} бар</p>
-                    </div>
-                </div>
-            </div>
+<html lang="ru">
+<head>
+    <title>{{ .tire.Title }} — Подробная информация</title>
+    <link rel="stylesheet" href="/static/styles/index_style.css">
+</head>
 
-            <div class="calculation-form">
-                <h2>Расчёт оптимального давления</h2>
-                <form action="/tire/{{ .tire.ID }}" method="GET">
-                    <div class="form-group">
-                        <label>Температура (°C):</label>
-                        <input type="number" name="temperature" value="{{ .temperature }}" step="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Вес автомобиля с нагрузкой (кг):</label>
-                        <input type="number" name="weight" value="{{ .weight }}" min="500" max="5000" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Тип покрытия:</label>
-                        <select name="surface">
-                            <option value="1.0" {{ if eq .surface 1.0 }}selected{{ end }}>Асфальт</option>
-                            <option value="0.9" {{ if eq .surface 0.9 }}selected{{ end }}>Гравий</option>
-                            <option value="0.8" {{ if eq .surface 0.8 }}selected{{ end }}>Снег</option>
-                            <option value="0.7" {{ if eq .surface 0.7 }}selected{{ end }}>Лёд</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="device-btn">Рассчитать</button>
-                </form>
+<body class="vibes-page">
 
-                <div class="result">
-                    <h3>Рекомендуемое давление: <span class="pressure-value">{{ .recommendedPressure | printf "%.1f" }}</span> бар</h3>
-                </div>
-            </div>
-        </main>
+<header class="header-center">
+    <div class="header-inner" style="display: flex; justify-content: center;">
+        <h1 class="logo">
+            <a href="/tires">Домой</a>
+        </h1>
+    </div>
+</header>
 
-        <a href="/calculation/1" class="cart-btn">
-            <img src="/static/img/tire.svg" alt="Заявка">
-        </a>
-    </body>
+<div class="vibes-viewport">
+
+    <video class="vibes-video" controls autoplay muted loop>
+        <source src="http://localhost:9000/test/{{ .tire.Video }}" type="video/mp4">
+    </video>
+
+    <div class="vibes-overlay"></div>
+
+    <div class="vibes-content">
+
+        <h1 class="vibes-title">{{ .tire.Title }}</h1>
+
+        <p class="vibes-meta">
+            {{ .tire.Width }}/{{ .tire.Profile }} R{{ .tire.Diameter }} · {{ .tire.Type }}
+        </p>
+
+        <p class="vibes-description">
+            {{ .tire.ServiceDescription }}
+        </p>
+
+        <div class="vibes-manager">
+            <span class="vibes-manager__label">Коэффициент шины</span>
+            <span class="vibes-manager__name">
+                {{ .tire.TireCoefficient }} бар
+            </span>
+        </div>
+
+        <form method="POST" action="/cart/add" style="margin-top:16px;">
+            <input type="hidden" name="tire_id" value="{{ .tire.ID }}">
+            <button type="submit" class="tire-btn" style="width: 100%; padding: 10px 0; background-color: #ed1c24; color: white; text-align: center; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; border: none; cursor: pointer; transition: background-color 0.3s ease;">
+                Добавить в заявку
+            </button>
+        </form>
+
+    </div>
+</div>
+
+</body>
 </html>

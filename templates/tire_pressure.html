@@ -1,13 +1,15 @@
 <html lang="rus">
     <head>
-        <title>Расчёт - Заявка №{{ .request.ID }}</title>
+        <title>Расчёт давления - Заявка №{{ .request.ID }}</title>
         <link rel="stylesheet" href="/static/styles/index_style.css">
     </head>
     <body>
-        <header>
-            <h1>
-                <a href="/tires">Домой</a>
-            </h1>
+        <header class="header-center">
+            <div class="header-inner" style="display: flex; justify-content: center;">
+                <h1 class="logo">
+                    <a href="/tires">Домой</a>
+                </h1>
+            </div>
         </header>
         
         <main class="main-content">
@@ -16,18 +18,19 @@
             <div class="order-card" style="margin-bottom: 30px;">
                 <div class="order-details">
                     <p><strong>ID заявки:</strong> {{ .request.ID }}</p>
-                    <p><strong>Температура:</strong> {{ .request.Temperature }} °C</p>
-                    <p><strong>Вес автомобиля:</strong> {{ .request.Weight }} кг</p>
-                    <p><strong>Тип покрытия:</strong> {{ .request.Surface }}</p>
+                    <p><strong>Температура воздуха:</strong> {{ .request.AirTemperature }} °C</p>
+                    <p><strong>Вес автомобиля:</strong> {{ .request.CarWeight }} кг</p>
+                    <p><strong>Коэффициент покрытия:</strong> {{ .request.SurfaceCoefficient }}</p>
                 </div>
             </div>
 
-            <h3 style="margin-bottom: 15px; color: #333;">Состав заявки:</h3>
+            <h3 style="margin-bottom: 15px; color: #333;">Состав заявки (услуги):</h3>
 
+            {{ if .request_tires }}
             <div class="cart-items">
                 {{ range .request_tires }}
                 <div class="order-card">
-                    <div class="device-image">
+                    <div class="tire-image">
                         <img src="http://localhost:9000/test/{{ .Tire.Photo }}" alt="{{ .Tire.Title }}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div class="order-details" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
@@ -37,26 +40,22 @@
                             <p>{{ .Tire.Type }}</p>
                         </div>
                         <div style="flex: 0 0 auto;">
-                            <p>Базовое: {{ .Tire.BasePressure }} бар</p>
+                            <p>Коэффициент шины: {{ .Tire.TireCoefficient }} бар</p>
                         </div>
                         <div style="flex: 0 0 auto;">
-                            <p style="color: #ea5fac;">Расчёт: {{ .Pressure | printf "%.1f" }} бар</p>
-                        </div>
-                        <div style="flex: 0 0 auto;">
-                            <p style="color: #ed1c24;">М-М: {{ .Tire.MM }}</p>
+                            <p style="color: #ea5fac;">Коэффициент покрытия: {{ $.request.SurfaceCoefficient }}</p>
                         </div>
                     </div>
                 </div>
                 {{ end }}
             </div>
+            {{ else }}
+            <p style="color: #666; font-style: italic;">Заявка пуста</p>
+            {{ end }}
 
             <div class="result">
-                <h3>Результат расчёта: <span class="pressure-value">{{ .request.Result | printf "%.1f" }}</span> бар</h3>
+                <h3>Результат расчёта: <span class="pressure-value">{{ .request.PressureResult | printf "%.1f" }}</span> бар</h3>
             </div>
         </main>
-
-        <a href="/calculation/{{ .request.ID }}" class="cart-btn">
-            <img src="/static/img/tire.svg" alt="Заявка">
-        </a>
     </body>
 </html>
