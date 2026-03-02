@@ -2,6 +2,76 @@
 <head>
     <title>Расчёт давления - Заявка №{{ .request.ID }}</title>
     <link rel="stylesheet" href="/static/styles/index_style.css">
+    <style>
+        /* Таблица в стиле вашего дизайна — добавляем минимально */
+        .pressure-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #6b6b6b;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .pressure-table th {
+            background: #fafafa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #6b6b6b;
+            text-transform: uppercase;
+        }
+        .pressure-table td {
+            padding: 12px 15px;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+        .pressure-table tr:last-child td {
+            border-bottom: none;
+        }
+        .pressure-table tr:hover {
+            background: #f9f9f9;
+        }
+        .pressure-table .tire-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+        }
+        .pressure-table .tire-cell img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .pressure-table .pressure-value {
+            color: #ea5fac;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .pressure-table .coeff {
+            color: #999;
+            font-size: 13px;
+        }
+        /* Адаптив для мобильных */
+        @media (max-width: 768px) {
+            .pressure-table {
+                font-size: 12px;
+            }
+            .pressure-table th,
+            .pressure-table td {
+                padding: 8px 10px;
+            }
+            .pressure-table .tire-cell img {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
 </head>
 <body>
 <header class="header-center">
@@ -13,61 +83,55 @@
 </header>
 
 <main class="main-content">
-    <h2 style="margin-bottom: 20px; color: #333;">Заявка Tire_pressure №{{ .request.ID }}</h2>
+    <h2 class="section-title">Заявка Tire_pressure №{{ .request.ID }}</h2>
 
-    <div class="order-card" style="margin-bottom: 30px;">
-        <div class="order-details">
-            <p><strong>ID заявки:</strong> {{ .request.ID }}</p>
-            <p><strong>Описание:</strong> {{ .request.Description }}</p>
-            <!-- ✅ Исправлено: доступ к параметрам через .Entries[0] -->
-            {{ if .request_entries }}
-            <p><strong>Температура воздуха:</strong> {{ (index .request_entries 0).AirTemperature }} °C</p>
-            <p><strong>Вес автомобиля:</strong> {{ (index .request_entries 0).CarWeight }} кг</p>
-            <p><strong>Коэф. покрытия:</strong> {{ (index .request_entries 0).CoatingCoeff }}</p>
-            {{ end }}
-        </div>
-    </div>
-
-    <h3 style="margin-bottom: 15px; color: #333;">Состав заявки (услуги):</h3>
-
+    <!-- ✅ Убрано описание заявки, оставлены только параметры расчёта -->
     {{ if .request_entries }}
-    <div class="cart-items">
-        {{ range .request_entries }}
-        <div class="order-card">
-            <div class="tire-image">
-                <img src="http://localhost:9000/test/{{ .Tire.Photo }}" alt="{{ .Tire.Title }}" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="order-details" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 150px;">
-                    <p><strong>{{ .Tire.Title }}</strong></p>
-                    <p>{{ .Tire.Description }}</p>
-                </div>
-                <div style="flex: 0 0 auto;">
-                    <p>Коэф. шины: {{ .Tire.TireCoefficient }}</p>
-                </div>
-                <div style="flex: 0 0 auto;">
-                    <p>Коэф. покрытия: {{ .CoatingCoeff }}</p>
-                </div>
-                <div style="flex: 0 0 auto;">
-                    <p>Температура: {{ .AirTemperature }}°C</p>
-                </div>
-                <div style="flex: 0 0 auto;">
-                    <p>Вес авто: {{ .CarWeight }} кг</p>
-                </div>
-                <div style="flex: 0 0 auto;">
-                    <p style="color: #ea5fac; font-weight: bold;">Давление: {{ printf "%.2f" .Pressure }}</p>
-                </div>
-            </div>
-        </div>
-        {{ end }}
+    <div style="margin-bottom: 20px; font-size: 14px; color: #666;">
+        <strong>Параметры расчёта:</strong>
+        Температура: {{ (index .request_entries 0).AirTemperature }}°C · 
+        Вес авто: {{ (index .request_entries 0).CarWeight }} кг · 
+        Коэф. покрытия: {{ (index .request_entries 0).CoatingCoeff }}
     </div>
+    {{ end }}
+
+    <!-- ✅ Таблица с заголовками столбцов -->
+    {{ if .request_entries }}
+    <table class="pressure-table">
+        <thead>
+            <tr>
+                <th>Шина</th>
+                <th>Коэф. шины</th>
+                <th>Коэф. покрытия</th>
+                <th>Температура</th>
+                <th>Вес авто</th>
+                <th>Давление</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .request_entries }}
+            <tr>
+                <td class="tire-cell">
+                    <img src="http://localhost:9000/test/{{ .Tire.Photo }}" alt="{{ .Tire.Title }}">
+                    <span>{{ .Tire.Title }}</span>
+                </td>
+                <td class="coeff">{{ .Tire.TireCoefficient }}</td>
+                <td class="coeff">{{ .CoatingCoeff }}</td>
+                <td>{{ .AirTemperature }}°C</td>
+                <td>{{ .CarWeight }} кг</td>
+                <td class="pressure-value">{{ printf "%.2f" .Pressure }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
     {{ else }}
     <p style="color: #666; font-style: italic;">Заявка Tire_pressure пуста</p>
     {{ end }}
 
+    <!-- Итоговый результат -->
     {{ if .request_entries }}
     <div class="result">
-        <h3>Результат расчёта: <span class="pressure-value">{{ printf "%.1f" (index .request_entries 0).Pressure }}</span></h3>
+        <h3>Рекомендуемое давление: <span class="pressure-value">{{ printf "%.1f" (index .request_entries 0).Pressure }}</span></h3>
     </div>
     {{ end }}
 </main>

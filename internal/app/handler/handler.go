@@ -16,6 +16,13 @@ func NewHandler(r *repository.Repository) *Handler {
 	return &Handler{Repo: r}
 }
 
+// getEntryCount — вспомогательный метод: возвращает количество записей в заявке Tire_pressure
+func (h *Handler) getEntryCount() int {
+	req, err := h.Repo.GetTirePressure(1)
+	if err != nil || len(req.Entries) == 0 {
+		return 0
+	}
+	return
 // GET /tires — список шин
 func (h *Handler) GetTires(ctx *gin.Context) {
 	query := ctx.Query("query")
@@ -31,12 +38,13 @@ func (h *Handler) GetTires(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "tires.html", gin.H{
 		"tires": tires,
 		"query": query,
-	})
-}
+		"tires":      tires,
+		"query":      query,
+		"entryCount": h.getEntryCount(), // ✅ Количество шин в заявке
 
 // GET /tire/:id — деталь шины + расчёт давления
 func (h *Handler) GetTire(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+// GET /tire/:id — деталь шины
 	tire, err := h.Repo.GetTire(id)
 	if err != nil {
 		ctx.String(http.StatusNotFound, "Not found")
@@ -54,6 +62,7 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 		"recommendedPressure": repository.CalculatePressure(tire.TireCoefficient, coating, temp, weight),
 	})
 }
+
 
 // GET /tire_pressure/:id — заявка Tire_pressure
 func (h *Handler) GetTirePressure(ctx *gin.Context) {
