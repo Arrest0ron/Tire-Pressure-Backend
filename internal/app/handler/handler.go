@@ -9,132 +9,66 @@ import (
 )
 
 type Handler struct {
-	Repository *repository.Repository
+	Repo *repository.Repository
 }
 
 func NewHandler(r *repository.Repository) *Handler {
-	return &Handler{
-		Repository: r,
-	}
+	return &Handler{Repo: r}
 }
 
-// GetTires - GET /tires - список шин с поиском
+// GET /tires — список шин
 func (h *Handler) GetTires(ctx *gin.Context) {
-	var tires []repository.Tire
-	var err error
-
-	searchQuery := ctx.Query("query")
-	if searchQuery == "" {
-		tires, err = h.Repository.GetTires()
-		if err != nil {
-			logrus.Error(err)
-		}
-	} else {
-		tires, err = h.Repository.GetTireByTitle(searchQuery)
-		if err != nil {
-			logrus.Error(err)
-		}
+	query := ctx.Query("query")
+	tires, err := h.Repo.GetTires()
+	if err != nil {
+		logrus.Error(err)
+		ctx.String(http.StatusInternalServerError, "Error")
+		return
 	}
-
-	// Подсчёт количества услуг в заявке
-	request, err := h.Repository.GetRequestByID(1)
-	cartCount := 0
-	if err == nil {
-		cartCount = len(request.TireIDs)
+	if query != "" {
+		tires, _ = h.Repo.GetTiresByTitle(query)
 	}
-
 	ctx.HTML(http.StatusOK, "tires.html", gin.H{
-		"tires":     tires,
-		"query":     searchQuery,
-		"cartCount": cartCount,
+		"tires": tires,
+		"query": query,
 	})
 }
 
-// GetTire - GET /tire/:id - детали шины
+// GET /tire/:id — деталь шины + расчёт давления
 func (h *Handler) GetTire(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-
-	id, err := strconv.Atoi(idStr)
+	id, _ := strconv.Atoi(ctx.Param("id"))
+	tire, err := h.Repo.GetTire(id)
 	if err != nil {
-		logrus.Error(err)
+		ctx.String(http.StatusNotFound, "Not found")
+		return
 	}
-
-	tire, err := h.Repository.GetTire(id)
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	temperature := ctx.DefaultQuery("temperature", "20")
-	weight := ctx.DefaultQuery("weight", "1500")
-	surface := ctx.DefaultQuery("surface", "1.0")
-
-	tempVal, _ := strconv.ParseFloat(temperature, 64)
-	weightVal, _ := strconv.ParseFloat(weight, 64)
-	surfaceVal, _ := strconv.ParseFloat(surface, 64)
-
-	recommendedPressure := repository.CalculatePressure(tire.TireCoefficient, tempVal, weightVal, surfaceVal)
+	temp, _ := strconv.ParseFloat(ctx.DefaultQuery("temperature", "20"), 64)
+	weight, _ := strconv.ParseFloat(ctx.DefaultQuery("weight", "1500"), 64)
+	coating, _ := strconv.ParseFloat(ctx.DefaultQuery("coating", "1.0"), 64)
 
 	ctx.HTML(http.StatusOK, "tire.html", gin.H{
 		"tire":                tire,
-		"temperature":         tempVal,
-		"weight":              weightVal,
-		"surface":             surfaceVal,
-		"recommendedPressure": recommendedPressure,
+		"temperature":         temp,
+		"weight":              weight,
+		"coating":             coating,
+		"recommendedPressure": repository.CalculatePressure(tire.TireCoefficient, coating, temp, weight),
 	})
 }
 
-// GetTirePressure - GET /tire_pressure/:id - заявка по ID
+// GET /tire_pressure/:id — заявка Tire_pressure
 func (h *Handler) GetTirePressure(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		logrus.Error(err)
-		ctx.String(http.StatusBadRequest, "Неверный ID заявки")
+	id, _ := strconv.Atoi(ctx.Param("id"))
+	req, err := h.Repo.GetTirePressure(id)
+	if err != nil || len(req.Entries) == 0 {
+		ctx.String(http.StatusNotFound, "Not found")
 		return
 	}
-
-	// Получаем заявку по ID из словаря
-	request, err := h.Repository.GetRequestByID(id)
-	if err != nil {
-		logrus.Error(err)
-		ctx.String(http.StatusNotFound, "Заявка не найдена")
-		return
-	}
-
-	// Получаем шины для этой заявки
-	tires, err := h.Repository.GetRequestTires(id)
-	if err != nil {
-		logrus.Error(err)
-		ctx.String(http.StatusNotFound, "Заявка пуста")
-		return
-	}
-
-	// Логируем количество шин для отладки
-	logrus.Infof("Заявка %d: найдено %d шин", id, len(tires))
-	for i, tire := range tires {
-		logrus.Infof("Шина %d: ID=%d, Title=%s", i+1, tire.ID, tire.Title)
-	}
-
-	// Вычисляем давление для каждой шины
-	type TireWithPressure struct {
-		Tire     repository.Tire
-		Pressure float64
-	}
-	tiresWithPressure := make([]TireWithPressure, len(tires))
-	for i, tire := range tires {
-		tiresWithPressure[i] = TireWithPressure{
-			Tire:     tire,
-			Pressure: repository.CalculatePressure(tire.TireCoefficient, request.AirTemperature, request.CarWeight, request.SurfaceCoefficient),
-		}
-	}
-
 	ctx.HTML(http.StatusOK, "tire_pressure.html", gin.H{
-		"request":             request,
-		"request_tires":       tiresWithPressure,
-		"temperature":         request.AirTemperature,
-		"weight":              request.CarWeight,
-		"surface":             request.SurfaceCoefficient,
-		"recommendedPressure": request.PressureResult,
+		"request":             req,
+		"request_entries":     req.Entries,
+		"temperature":         req.Entries[0].AirTemperature,
+		"weight":              req.Entries[0].CarWeight,
+		"coating":             req.Entries[0].CoatingCoeff,
+		"recommendedPressure": req.Entries[0].Pressure,
 	})
 }

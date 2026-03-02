@@ -1,61 +1,75 @@
 <html lang="rus">
-    <head>
-        <title>Расчёт давления - Заявка №{{ .request.ID }}</title>
-        <link rel="stylesheet" href="/static/styles/index_style.css">
-    </head>
-    <body>
-        <header class="header-center">
-            <div class="header-inner" style="display: flex; justify-content: center;">
-                <h1 class="logo">
-                    <a href="/tires">Домой</a>
-                </h1>
-            </div>
-        </header>
-        
-        <main class="main-content">
-            <h2 style="margin-bottom: 20px; color: #333;">Заявка №{{ .request.ID }} на расчёт давления</h2>
+<head>
+    <title>Расчёт давления - Заявка №{{ .request.ID }}</title>
+    <link rel="stylesheet" href="/static/styles/index_style.css">
+</head>
+<body>
+<header class="header-center">
+    <div class="header-inner" style="display: flex; justify-content: center;">
+        <h1 class="logo">
+            <a href="/tires">Домой</a>
+        </h1>
+    </div>
+</header>
 
-            <div class="order-card" style="margin-bottom: 30px;">
-                <div class="order-details">
-                    <p><strong>ID заявки:</strong> {{ .request.ID }}</p>
-                    <p><strong>Температура воздуха:</strong> {{ .request.AirTemperature }} °C</p>
-                    <p><strong>Вес автомобиля:</strong> {{ .request.CarWeight }} кг</p>
-                    <p><strong>Коэффициент покрытия:</strong> {{ .request.SurfaceCoefficient }}</p>
-                </div>
-            </div>
+<main class="main-content">
+    <h2 style="margin-bottom: 20px; color: #333;">Заявка Tire_pressure №{{ .request.ID }}</h2>
 
-            <h3 style="margin-bottom: 15px; color: #333;">Состав заявки (услуги):</h3>
-
-            {{ if .request_tires }}
-            <div class="cart-items">
-                {{ range .request_tires }}
-                <div class="order-card">
-                    <div class="tire-image">
-                        <img src="http://localhost:9000/test/{{ .Tire.Photo }}" alt="{{ .Tire.Title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="order-details" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 150px;">
-                            <p><strong>{{ .Tire.Title }}</strong></p>
-                            <p>{{ .Tire.Width }}/{{ .Tire.Profile }} R{{ .Tire.Diameter }}</p>
-                            <p>{{ .Tire.Type }}</p>
-                        </div>
-                        <div style="flex: 0 0 auto;">
-                            <p>Коэффициент шины: {{ .Tire.TireCoefficient }} бар</p>
-                        </div>
-                        <div style="flex: 0 0 auto;">
-                            <p style="color: #ea5fac;">Коэффициент покрытия: {{ $.request.SurfaceCoefficient }}</p>
-                        </div>
-                    </div>
-                </div>
-                {{ end }}
-            </div>
-            {{ else }}
-            <p style="color: #666; font-style: italic;">Заявка пуста</p>
+    <div class="order-card" style="margin-bottom: 30px;">
+        <div class="order-details">
+            <p><strong>ID заявки:</strong> {{ .request.ID }}</p>
+            <p><strong>Описание:</strong> {{ .request.Description }}</p>
+            <!-- ✅ Исправлено: доступ к параметрам через .Entries[0] -->
+            {{ if .request_entries }}
+            <p><strong>Температура воздуха:</strong> {{ (index .request_entries 0).AirTemperature }} °C</p>
+            <p><strong>Вес автомобиля:</strong> {{ (index .request_entries 0).CarWeight }} кг</p>
+            <p><strong>Коэф. покрытия:</strong> {{ (index .request_entries 0).CoatingCoeff }}</p>
             {{ end }}
+        </div>
+    </div>
 
-            <div class="result">
-                <h3>Результат расчёта: <span class="pressure-value">{{ .request.PressureResult | printf "%.1f" }}</span> бар</h3>
+    <h3 style="margin-bottom: 15px; color: #333;">Состав заявки (услуги):</h3>
+
+    {{ if .request_entries }}
+    <div class="cart-items">
+        {{ range .request_entries }}
+        <div class="order-card">
+            <div class="tire-image">
+                <img src="http://localhost:9000/test/{{ .Tire.Photo }}" alt="{{ .Tire.Title }}" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-        </main>
-    </body>
+            <div class="order-details" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                    <p><strong>{{ .Tire.Title }}</strong></p>
+                    <p>{{ .Tire.Description }}</p>
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <p>Коэф. шины: {{ .Tire.TireCoefficient }}</p>
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <p>Коэф. покрытия: {{ .CoatingCoeff }}</p>
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <p>Температура: {{ .AirTemperature }}°C</p>
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <p>Вес авто: {{ .CarWeight }} кг</p>
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <p style="color: #ea5fac; font-weight: bold;">Давление: {{ printf "%.2f" .Pressure }}</p>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+    {{ else }}
+    <p style="color: #666; font-style: italic;">Заявка Tire_pressure пуста</p>
+    {{ end }}
+
+    {{ if .request_entries }}
+    <div class="result">
+        <h3>Результат расчёта: <span class="pressure-value">{{ printf "%.1f" (index .request_entries 0).Pressure }}</span></h3>
+    </div>
+    {{ end }}
+</main>
+</body>
 </html>

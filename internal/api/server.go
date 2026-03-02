@@ -13,10 +13,10 @@ func StartServer() {
 
 	repo, err := repository.NewRepository()
 	if err != nil {
-		logrus.Error("Ошибка инициализация репозитория")
+		logrus.Fatal("Ошибка инициализации репозитория: ", err)
 	}
 
-	handler1 := handler.NewHandler(repo)
+	h := handler.NewHandler(repo)
 	r := gin.Default()
 
 	r.LoadHTMLGlob("templates/*")
@@ -25,9 +25,11 @@ func StartServer() {
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(302, "/tires")
 	})
-	r.GET("/tires", handler1.GetTires)
-	r.GET("/tire/:id", handler1.GetTire)
-	r.GET("/tire_pressure/:id", handler1.GetTirePressure)
+	
+	// ✅ Маршруты: URL с подчёркиванием (как в ТЗ), методы — CamelCase (как в Go)
+	r.GET("/tires", h.GetTires)                    // список шин
+	r.GET("/tire/:id", h.GetTire)                  // деталь шины
+	r.GET("/tire_pressure/:id", h.GetTirePressure) // заявка Tire_pressure
 
 	r.Run("127.0.0.1:8081")
 	log.Println("Server down")

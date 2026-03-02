@@ -5,310 +5,233 @@ import (
 	"strings"
 )
 
+// Repository — хранилище данных (Lab 1: данные в массивах, без БД).
 type Repository struct {
 }
 
+// NewRepository создаёт новый экземпляр репозитория.
 func NewRepository() (*Repository, error) {
 	return &Repository{}, nil
 }
 
+// Tire — услуга: шина с коэффициентами.
 type Tire struct {
-	ID               int     `json:"id"`
-	Title            string  `json:"title"`
-	Width            int     `json:"width"`
-	Profile          int     `json:"profile"`
-	Diameter         int     `json:"diameter"`
-	Type             string  `json:"type"`
-	TireCoefficient  float64 `json:"tire_coefficient"`
-	ServiceDescription string  `json:"service_description"`
-	Photo            string  `json:"photo"`
-	Video            string  `json:"video"`
+	ID              int
+	Title           string  // название шины
+	Description     string  // описание шины
+	Photo           string  // ключ изображения в Minio
+	Video           string  // ключ видео в Minio
+	TireCoefficient float64 // коэффициент шины
 }
 
-// Request - структура заявки (словарь)
-type Request struct {
-	ID               int
-	TireIDs          []int // список ID шин в заявке
-	AirTemperature   float64
-	CarWeight        float64
-	SurfaceCoefficient float64
-	PressureResult   float64 // результат вычислений
+// TirePressure — заявка: параметры для расчёта давления в шинах (Tire_pressure).
+type TirePressure struct {
+	ID            int
+	Title         string
+	Description   string
+	Entries       []TirePressureEntry
+	EntryCount    int
 }
 
+// TirePressureEntry — связь м-м: шина + параметры, результат — давление.
+type TirePressureEntry struct {
+	Tire           Tire
+	CoatingCoeff   float64 // коэффициент покрытия (м-м поле)
+	AirTemperature float64 // температура воздуха (поле Заявка)
+	CarWeight      float64 // вес авто (поле Заявка)
+	Pressure       float64 // результат: давление в шине
+}
+
+// GetTires возвращает все шины (услуги).
 func (r *Repository) GetTires() ([]Tire, error) {
 	tires := []Tire{
 		{
-			ID:               1,
-			Title:            "Michelin Pilot Sport 4S",
-			Type:             "summer",
-			Width:            225,
-			Profile:          45,
-			Diameter:         17,
-			Photo:            "Michelin Pilot Sport 4S.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Высокопроизводительная летняя шина для спортивных автомобилей. Отличная управляемость на сухом и мокром покрытии, низкий уровень шума, высокий ресурс. Идеально подходит для мощных седанов и купе класса премиум.",
-			TireCoefficient:  2.2,
+			ID:              1,
+			Title:           "Michelin Pilot Sport 4S",
+			Description:     "Высокопроизводительная летняя шина для спортивных автомобилей. Отличная управляемость на сухом и мокром покрытии.",
+			Photo:           "Michelin Pilot Sport 4S.jpg",
+			Video:           "yellow_black.mp4",
+			TireCoefficient: 2.2,
 		},
 		{
-			ID:               2,
-			Title:            "Nokian Hakkapeliitta R5",
-			Type:             "winter",
-			Width:            205,
-			Profile:          55,
-			Diameter:         16,
-			Photo:            "Nokian Hakkapeliitta R5.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Профессиональная зимняя шина с уникальным рисунком протектора для максимального сцепления на льду и снегу. Отличная курсовая устойчивость, короткий тормозной путь, комфортная езда. Подходит для суровых зимних условий.",
-			TireCoefficient:  2.3,
+			ID:              2,
+			Title:           "Nokian Hakkapeliitta R5",
+			Description:     "Профессиональная зимняя шина с уникальным рисунком протектора для максимального сцепления на льду и снегу.",
+			Photo:           "Nokian Hakkapeliitta R5.jpg",
+			Video:           "yellow_black.mp4",
+			TireCoefficient: 2.3,
 		},
 		{
-			ID:               3,
-			Title:            "Continental AllSeasonContact",
-			Type:             "allseason",
-			Width:            195,
-			Profile:          65,
-			Diameter:         15,
-			Photo:            "Continental AllSeasonContact.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Всесезонная шина премиум-класса для умеренного климата. Сбалансированное сочетание летних и зимних характеристик, низкое сопротивление качению, отличное сцепление на мокрой дороге. Идеальный выбор для повседневной эксплуатации круглый год.",
-			TireCoefficient:  2.2,
+			ID:              3,
+			Title:           "Continental AllSeasonContact",
+			Description:     "Всесезонная шина премиум-класса для умеренного климата. Сбалансированное сочетание характеристик.",
+			Photo:           "Continental AllSeasonContact.jpg",
+			Video:           "yellow_black.mp4",
+			TireCoefficient: 2.2,
 		},
 		{
-			ID:               4,
-			Title:            "Bridgestone Potenza RE003",
-			Type:             "summer",
-			Width:            235,
-			Profile:          40,
-			Diameter:         18,
-			Photo:            "Bridgestone Potenza RE003.jpeg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Спортивная летняя шина для мощных седанов и автомобилей бизнес-класса. Высокая курсовая устойчивость, точное управление, отличное сцепление на сухом покрытии. Подходит для агрессивного стиля вождения и высоких скоростей.",
-			TireCoefficient:  2.3,
+			ID:              4,
+			Title:           "Bridgestone Potenza RE003",
+			Description:     "Спортивная летняя шина для мощных седанов. Высокая курсовая устойчивость и точное управление.",
+			Photo:           "Bridgestone Potenza RE003.jpeg",
+			Video:           "yellow_black.mp4",
+			TireCoefficient: 2.3,
 		},
 		{
-			ID:               5,
-			Title:            "Goodyear UltraGrip Ice 2",
-			Type:             "winter",
-			Width:            215,
-			Profile:          60,
-			Diameter:         16,
-			Photo:            "Goodyear UltraGrip Ice 2.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Зимняя шина для суровых зимних условий. Трехмерный ламелированный рисунок протектора обеспечивает отличное сцепление на льду и снегу. Надежное торможение, устойчивость на скользких участках, комфортная езда.",
-			TireCoefficient:  2.4,
+			ID:              5,
+			Title:           "Goodyear UltraGrip Ice 2",
+			Description:     "Зимняя шина для суровых условий. Трехмерный ламелированный рисунок для сцепления на льду.",
+			Photo:           "Goodyear UltraGrip Ice 2.jpg",
+			Video:           "yellow_black.mp4",
+			TireCoefficient: 2.4,
 		},
 		{
-			ID:               6,
-			Title:            "Vredestein Quatrac Pro",
-			Type:             "allseason",
-			Width:            205,
-			Profile:          50,
-			Diameter:         17,
-			Photo:            "Vredestein Quatrac Pro.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Всесезонная шина премиум класса с инновационной резиновой смесью. Отличное сцепление в любых погодных условиях, низкий уровень шума, высокий ресурс. Подходит для современных автомобилей с высокими требованиями к комфорту.",
-			TireCoefficient:  2.2,
-		},
-		{
-			ID:               7,
-			Title:            "Yokohama Advan Neova",
-			Type:             "summer",
-			Width:            245,
-			Profile:          35,
-			Diameter:         19,
-			Photo:            "Yokohama Advan Neova.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Спортивная летняя шина для высокопроизводительных автомобилей. Улучшенная управляемость и точность рулевого управления, отличное сцепление на сухом покрытии, низкое сопротивление качению. Подходит для спортивного вождения и динамичной езды.",
-			TireCoefficient:  2.4,
-		},
-		{
-			ID:               8,
-			Title:            "Pirelli Winter Cinturato",
-			Type:             "winter",
-			Width:            185,
-			Profile:          60,
-			Diameter:         14,
-			Photo:            "Pirelli Winter Cinturato.jpg",
-			Video:            "yellow_black.mp4",
-			ServiceDescription: "Зимняя шина для городских автомобилей и компактных автомобилей. Отличное сцепление на снегу и льду, короткий тормозной путь, комфортная и тихая езда. Идеальный выбор для безопасной зимней эксплуатации в городских условиях.",
-			TireCoefficient:  2.1,
+			ID:              6,
+			Title:           "Vredestein Quatrac Pro",
+			Description:     "Всесезонная шина премиум класса с инновационной резиновой смесью для любых погодных условий.",
+			Photo:           "Vredestein Quatrac Pro.jpg",
+			Video:           "yellow_black.mp4",
+			TireCoefficient: 2.2,
 		},
 	}
 	if len(tires) == 0 {
-		return nil, fmt.Errorf("Массив пустой")
+		return nil, fmt.Errorf("массив шин пуст")
 	}
-
 	return tires, nil
 }
 
-// GetRequests - словарь заявок (вторая коллекция)
-func (r *Repository) GetRequests() (map[int]Request, error) {
-	requests := map[int]Request{
-		1: {
-			ID:               1,
-			TireIDs:          []int{1, 5},
-			AirTemperature:   20,
-			CarWeight:        1500,
-			SurfaceCoefficient: 1.0,
-			PressureResult:   2.2,
-		},
-		2: {
-			ID:               2,
-			TireIDs:          []int{2, 4},
-			AirTemperature:   15,
-			CarWeight:        1800,
-			SurfaceCoefficient: 0.9,
-			PressureResult:   2.4,
-		},
-		3: {
-			ID:               3,
-			TireIDs:          []int{3, 6},
-			AirTemperature:   25,
-			CarWeight:        1600,
-			SurfaceCoefficient: 1.1,
-			PressureResult:   2.1,
-		},
-		4: {
-			ID:               4,
-			TireIDs:          []int{7, 8},
-			AirTemperature:   10,
-			CarWeight:        1700,
-			SurfaceCoefficient: 0.8,
-			PressureResult:   2.5,
-		},
-		5: {
-			ID:               5,
-			TireIDs:          []int{1, 3, 5},
-			AirTemperature:   18,
-			CarWeight:        1900,
-			SurfaceCoefficient: 1.2,
-			PressureResult:   2.3,
-		},
-		6: {
-			ID:               6,
-			TireIDs:          []int{2, 6, 8},
-			AirTemperature:   5,
-			CarWeight:        2000,
-			SurfaceCoefficient: 0.7,
-			PressureResult:   2.6,
-		},
-		7: {
-			ID:               7,
-			TireIDs:          []int{4, 7},
-			AirTemperature:   30,
-			CarWeight:        1400,
-			SurfaceCoefficient: 1.3,
-			PressureResult:   2.0,
-		},
-		8: {
-			ID:               8,
-			TireIDs:          []int{1, 2, 3, 4},
-			AirTemperature:   0,
-			CarWeight:        2100,
-			SurfaceCoefficient: 0.6,
-			PressureResult:   2.7,
-		},
-	}
-	if len(requests) == 0 {
-		return nil, fmt.Errorf("Словарь пустой")
-	}
-
-	return requests, nil
-}
-
+// GetTire возвращает шину по ID.
 func (r *Repository) GetTire(id int) (Tire, error) {
 	tires, err := r.GetTires()
 	if err != nil {
 		return Tire{}, err
 	}
-
-	for _, tire := range tires {
-		if tire.ID == id {
-			return tire, nil
+	for _, t := range tires {
+		if t.ID == id {
+			return t, nil
 		}
 	}
-	return Tire{}, fmt.Errorf("Шина не найдена")
+	return Tire{}, fmt.Errorf("шина не найдена")
 }
 
-func (r *Repository) GetTireByTitle(title string) ([]Tire, error) {
+// GetTiresByTitle возвращает шины, содержащие подстроку в названии или описании.
+func (r *Repository) GetTiresByTitle(query string) ([]Tire, error) {
 	tires, err := r.GetTires()
 	if err != nil {
-		return []Tire{}, err
+		return nil, err
 	}
-
+	q := strings.ToLower(query)
 	var result []Tire
-	for _, tire := range tires {
-		if strings.Contains(strings.ToLower(tire.Title), strings.ToLower(title)) {
-			result = append(result, tire)
+	for _, t := range tires {
+		if strings.Contains(strings.ToLower(t.Title), q) || strings.Contains(strings.ToLower(t.Description), q) {
+			result = append(result, t)
 		}
 	}
 	return result, nil
 }
 
-// GetRequestByID - получить заявку по ID из словаря
-func (r *Repository) GetRequestByID(id int) (Request, error) {
-	requests, err := r.GetRequests()
-	if err != nil {
-		return Request{}, err
+// CalculatePressure вычисляет давление по коэффициентам и параметрам нагрузки.
+func CalculatePressure(tireCoeff, coatingCoeff float64, airTemp, carWeight float64) float64 {
+	if coatingCoeff <= 0 {
+		coatingCoeff = 1
 	}
-
-	request, exists := requests[id]
-	if !exists {
-		return Request{}, fmt.Errorf("Заявка не найдена")
-	}
-
-	return request, nil
+	tempFactor := (20.0 - airTemp) * 0.05
+	weightFactor := (carWeight - 1500) * 0.001
+	return (tempFactor + weightFactor + 1) * tireCoeff * coatingCoeff * 10
 }
 
-// GetRequestTires - получить шины для конкретной заявки
-func (r *Repository) GetRequestTires(requestID int) ([]Tire, error) {
-	request, err := r.GetRequestByID(requestID)
-	if err != nil {
-		return []Tire{}, err
-	}
-
+// buildTirePressure собирает заявку Tire_pressure из записей м-м.
+func (r *Repository) buildTirePressure(id int, title, description string, entries []struct {
+	TireID         int
+	CoatingCoeff   float64
+	AirTemperature float64
+	CarWeight      float64
+}) (TirePressure, error) {
 	tires, err := r.GetTires()
 	if err != nil {
-		return []Tire{}, err
+		return TirePressure{}, err
 	}
+	tireMap := make(map[int]Tire)
+	for _, t := range tires {
+		tireMap[t.ID] = t
+	}
+	var calcEntries []TirePressureEntry
+	for _, e := range entries {
+		tire, ok := tireMap[e.TireID]
+		if !ok {
+			continue
+		}
+		pressure := CalculatePressure(tire.TireCoefficient, e.CoatingCoeff, e.AirTemperature, e.CarWeight)
+		calcEntries = append(calcEntries, TirePressureEntry{
+			Tire:           tire,
+			CoatingCoeff:   e.CoatingCoeff,
+			AirTemperature: e.AirTemperature,
+			CarWeight:      e.CarWeight,
+			Pressure:       pressure,
+		})
+	}
+	return TirePressure{
+		ID:            id,
+		Title:         title,
+		Description:   description,
+		Entries:       calcEntries,
+		EntryCount:    len(calcEntries),
+	}, nil
+}
 
-	var result []Tire
-	for _, tireID := range request.TireIDs {
-		for _, tire := range tires {
-			if tire.ID == tireID {
-				result = append(result, tire)
-				break
+// GetTirePressures возвращает все заявки на расчёт давления (Tire_pressure).
+func (r *Repository) GetTirePressures() ([]TirePressure, error) {
+	entries := []struct {
+		TireID         int
+		CoatingCoeff   float64
+		AirTemperature float64
+		CarWeight      float64
+	}{
+		{1, 1.0, 20, 1500},
+		{2, 1.1, 15, 1800},
+		{3, 0.9, 25, 1600},
+		{4, 1.2, 10, 1700},
+		{5, 1.0, 5, 2000},
+		{6, 1.1, 30, 1400},
+	}
+	req, err := r.buildTirePressure(
+		1,
+		"Tire_pressure: стандартные условия",
+		"Расчёт давления в шинах для легкового авто: асфальт, умеренный климат, средняя загрузка. Все заявки типа Tire_pressure.",
+		entries,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return []TirePressure{req}, nil
+}
+
+// GetTirePressure возвращает заявку Tire_pressure по ID.
+func (r *Repository) GetTirePressure(id int) (TirePressure, error) {
+	requests, err := r.GetTirePressures()
+	if err != nil {
+		return TirePressure{}, err
+	}
+	for _, req := range requests {
+		if req.ID == id {
+			return req, nil
+		}
+	}
+	return TirePressure{}, fmt.Errorf("заявка Tire_pressure не найдена")
+}
+
+// GetTirePressureForTire ищет заявку Tire_pressure, содержащую данную шину, и возвращает запись м-м.
+func (r *Repository) GetTirePressureForTire(tireID int) (*TirePressureEntry, error) {
+	requests, err := r.GetTirePressures()
+	if err != nil {
+		return nil, err
+	}
+	for _, req := range requests {
+		for _, entry := range req.Entries {
+			if entry.Tire.ID == tireID {
+				return &entry, nil
 			}
 		}
 	}
-
-	if len(result) == 0 {
-		return nil, fmt.Errorf("Заявка пуста")
-	}
-
-	return result, nil
-}
-
-// CalculatePressure - рассчитать давление
-func CalculatePressure(basePressure float64, temperature float64, weight float64, surfaceCoeff float64) float64 {
-	tempDiff := 20.0 - temperature
-	tempAdjustment := tempDiff * 0.01
-
-	weightAdjustment := 0.0
-	if weight > 1500 {
-		weightAdjustment = (weight - 1500) / 500 * 0.1
-	}
-
-	surfaceAdjustment := (1.0 - surfaceCoeff) * 0.2
-
-	pressure := basePressure + tempAdjustment + weightAdjustment - surfaceAdjustment
-
-	if pressure < 1.8 {
-		pressure = 1.8
-	}
-	if pressure > 3.0 {
-		pressure = 3.0
-	}
-
-	return pressure
+	return nil, fmt.Errorf("шина не найдена в заявках Tire_pressure")
 }
