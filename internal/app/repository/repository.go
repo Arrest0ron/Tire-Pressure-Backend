@@ -14,32 +14,30 @@ func NewRepository() (*Repository, error) {
 	return &Repository{}, nil
 }
 
-// Tire — услуга: шина с коэффициентами.
+// Tire — услуга: шина с коэффициентами и медиа.
 type Tire struct {
-	ID              int
-	Title           string  // название шины
-	Description     string  // описание шины
-	Photo           string  // ключ изображения в Minio
-	Video           string  // ключ видео в Minio
-	TireCoefficient float64 // коэффициент шины
+	ID              int     `json:"id"`
+	Title           string  `json:"title"`            // название для каталога
+	Description     string  `json:"description"`      // описание для каталога
+	Photo           string  `json:"photo"`            // ключ фото в Minio
+	Video           string  `json:"video"`            // ключ видео в Minio
+	TireCoefficient float64 `json:"tire_coefficient"` // коэффициент шины (услуга)
 }
 
-// TirePressure — заявка: параметры для расчёта давления в шинах (Tire_pressure).
-type TirePressure struct {
-	ID            int
-	Title         string
-	Description   string
-	Entries       []TirePressureEntry
-	EntryCount    int
+// Tire_pressure — заявка: параметры расчёта + результаты.
+type Tire_pressure struct {
+	ID             int                 `json:"id"`              // единственная идентификация
+	AirTemperature float64             `json:"air_temperature"` // температура воздуха (заявка)
+	CarWeight      float64             `json:"car_weight"`      // вес авто (заявка)
+	Entries        []TirePressureEntry `json:"entries"`         // связи м-м
+	EntryCount     int                 `json:"entry_count"`     // [ДОБАВЛЕНО] количество записей
 }
 
-// TirePressureEntry — связь м-м: шина + параметры, результат — давление.
+// TirePressureEntry — связь м-м: шина + покрытие → давление.
 type TirePressureEntry struct {
-	Tire           Tire
-	CoatingCoeff   float64 // коэффициент покрытия (м-м поле)
-	AirTemperature float64 // температура воздуха (поле Заявка)
-	CarWeight      float64 // вес авто (поле Заявка)
-	Pressure       float64 // результат: давление в шине
+	TireID       int     `json:"tire_id"`       // ссылка на Tire.ID
+	CoatingCoeff float64 `json:"coating_coeff"` // коэффициент покрытия (м-м поле)
+	Pressure     float64 `json:"pressure"`      // результат: давление в шине (хранится)
 }
 
 // GetTires возвращает все шины (услуги).
@@ -130,94 +128,47 @@ func (r *Repository) GetTiresByTitle(query string) ([]Tire, error) {
 	return result, nil
 }
 
-// CalculatePressure вычисляет давление по коэффициентам и параметрам нагрузки.
-func CalculatePressure(tireCoeff, coatingCoeff float64, airTemp, carWeight float64) float64 {
-	if coatingCoeff <= 0 {
-		coatingCoeff = 1
-	}
-	tempFactor := (20.0 - airTemp) * 0.05
-	weightFactor := (carWeight - 1500) * 0.001
-	return (tempFactor + weightFactor + 1) * tireCoeff * coatingCoeff * 10
-}
-
 // buildTirePressure собирает заявку Tire_pressure из записей м-м.
-func (r *Repository) buildTirePressure(id int, title, description string, entries []struct {
-	TireID         int
-	CoatingCoeff   float64
-	AirTemperature float64
-	CarWeight      float64
-}) (TirePressure, error) {
-	tires, err := r.GetTires()
-	if err != nil {
-		return TirePressure{}, err
-	}
-	tireMap := make(map[int]Tire)
-	for _, t := range tires {
-		tireMap[t.ID] = t
-	}
-	var calcEntries []TirePressureEntry
-	for _, e := range entries {
-		tire, ok := tireMap[e.TireID]
-		if !ok {
-			continue
-		}
-		pressure := CalculatePressure(tire.TireCoefficient, e.CoatingCoeff, e.AirTemperature, e.CarWeight)
-		calcEntries = append(calcEntries, TirePressureEntry{
-			Tire:           tire,
-			CoatingCoeff:   e.CoatingCoeff,
-			AirTemperature: e.AirTemperature,
-			CarWeight:      e.CarWeight,
-			Pressure:       pressure,
-		})
-	}
-	return TirePressure{
-		ID:            id,
-		Title:         title,
-		Description:   description,
-		Entries:       calcEntries,
-		EntryCount:    len(calcEntries),
+// Давление (Pressure) берётся из хранимых данных, расчёт не производится.
+func (r *Repository) buildTirePressure(id int, entries []TirePressureEntry) (Tire_pressure, error) {
+	return Tire_pressure{
+		ID:             id,
+		AirTemperature: 20, // значение по умолчанию, если не указано в заявке
+		CarWeight:      1500,
+		Entries:        entries,
+		EntryCount:     len(entries), // [ДОБАВЛЕНО] заполняем количество записей
 	}, nil
 }
 
 // GetTirePressures возвращает все заявки на расчёт давления (Tire_pressure).
-func (r *Repository) GetTirePressures() ([]TirePressure, error) {
-	entries := []struct {
-		TireID         int
-		CoatingCoeff   float64
-		AirTemperature float64
-		CarWeight      float64
-	}{
-		{1, 1.0, 20, 1500},
-		{2, 1.1, 15, 1800},
-		{3, 0.9, 25, 1600},
-		{4, 1.2, 10, 1700},
-		{5, 1.0, 5, 2000},
-		{6, 1.1, 30, 1400},
+func (r *Repository) GetTirePressures() ([]Tire_pressure, error) {
+	entries := []TirePressureEntry{
+		{TireID: 1, CoatingCoeff: 1.0, Pressure: 44.0},
+		{TireID: 2, CoatingCoeff: 1.1, Pressure: 48.3},
+		{TireID: 3, CoatingCoeff: 0.9, Pressure: 39.6},
+		{TireID: 4, CoatingCoeff: 1.2, Pressure: 52.4},
+		{TireID: 5, CoatingCoeff: 1.0, Pressure: 48.0},
+		{TireID: 6, CoatingCoeff: 1.1, Pressure: 44.2},
 	}
-	req, err := r.buildTirePressure(
-		1,
-		"Tire_pressure: стандартные условия",
-		"Расчёт давления в шинах для легкового авто: асфальт, умеренный климат, средняя загрузка. Все заявки типа Tire_pressure.",
-		entries,
-	)
+	req, err := r.buildTirePressure(1, entries)
 	if err != nil {
 		return nil, err
 	}
-	return []TirePressure{req}, nil
+	return []Tire_pressure{req}, nil
 }
 
 // GetTirePressure возвращает заявку Tire_pressure по ID.
-func (r *Repository) GetTirePressure(id int) (TirePressure, error) {
+func (r *Repository) GetTirePressure(id int) (Tire_pressure, error) {
 	requests, err := r.GetTirePressures()
 	if err != nil {
-		return TirePressure{}, err
+		return Tire_pressure{}, err
 	}
 	for _, req := range requests {
 		if req.ID == id {
 			return req, nil
 		}
 	}
-	return TirePressure{}, fmt.Errorf("заявка Tire_pressure не найдена")
+	return Tire_pressure{}, fmt.Errorf("заявка Tire_pressure не найдена")
 }
 
 // GetTirePressureForTire ищет заявку Tire_pressure, содержащую данную шину, и возвращает запись м-м.
@@ -228,7 +179,7 @@ func (r *Repository) GetTirePressureForTire(tireID int) (*TirePressureEntry, err
 	}
 	for _, req := range requests {
 		for _, entry := range req.Entries {
-			if entry.Tire.ID == tireID {
+			if entry.TireID == tireID {
 				return &entry, nil
 			}
 		}
