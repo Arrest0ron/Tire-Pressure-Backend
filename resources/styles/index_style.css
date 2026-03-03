@@ -455,3 +455,96 @@ body {
     }
 
 }
+/* ================= PRESSURE TABLE (Заявка) ================= */
+
+/* Повышаем специфичность, чтобы стили точно применились */
+main .pressure-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border: 1px solid #6b6b6b;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+main .pressure-table thead {
+    background: #fafafa;
+}
+
+main .pressure-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #6b6b6b;
+    text-transform: uppercase;
+}
+
+main .pressure-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+main .pressure-table tr:last-child td {
+    border-bottom: none;
+}
+
+main .pressure-table tr:hover {
+    background: #f9f9f9;
+}
+
+/* Ячейка с шиной: flex-контейнер */
+main .pressure-table .tire-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+}
+
+/* ✅ ИЗОБРАЖЕНИЕ ШИНЫ: жёсткие размеры + сброс наследования */
+main .pressure-table .tire-cell img {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    max-width: none !important;
+    object-fit: cover !important;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: block;
+    flex-shrink: 0; /* Чтобы картинка не сжималась */
+}
+
+/* Значение давления */
+main .pressure-table .pressure-value {
+    color: #ea5fac;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Коэффициенты */
+main .pressure-table .coeff {
+    color: #999;
+    font-size: 13px;
+}
+
+/* Адаптив для мобильных */
+@media (max-width: 768px) {
+    main .pressure-table {
+        font-size: 12px;
+    }
+    main .pressure-table th,
+    main .pressure-table td {
+        padding: 8px 10px;
+    }
+    main .pressure-table .tire-cell img {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+    }
+}
