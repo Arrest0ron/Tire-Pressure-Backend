@@ -1,0 +1,76 @@
+<html lang="rus">
+<head>
+    <title>Расчёт давления - Заявка №{{ .request.ID }}</title>
+    <link rel="stylesheet" href="/static/styles/index_style.css">
+</head>
+<body>
+<header class="header-center">
+    <div class="header-inner" style="display: flex; justify-content: center;">
+        <h1 class="logo">
+            <a href="/tires">Домой</a>
+        </h1>
+    </div>
+</header>
+
+<main class="main-content">
+    <h2 class="section-title">
+        Заявка Tire_pressure №{{ .request.ID }}
+        {{ if .request.EntryCount }}
+            <small style="font-size: 14px; color: #999; font-weight: normal;">
+                (записей: {{ .request.EntryCount }})
+            </small>
+        {{ end }}
+    </h2>
+
+    <!-- ✅ Глобальные параметры заявки (одинаковые для всех шин) -->
+    {{ if .request_entries }}
+    <div style="margin-bottom: 20px; font-size: 14px; color: #666; background: #f9f9f9; padding: 12px 16px; border-radius: 6px;">
+        <strong>Параметры расчёта (общие для всех шин):</strong><br>
+        Температура воздуха: <b>{{ .request.AirTemperature }}°C</b> · 
+        Вес автомобиля: <b>{{ .request.CarWeight }} кг</b>
+    </div>
+    {{ end }}
+
+    <!-- ✅ Полная таблица: каждая шина со своими параметрами и РЕЗУЛЬТАТОМ -->
+    {{ if .request_entries }}
+    <table class="pressure-table">
+        <thead>
+            <tr>
+                <th>Шина</th>
+                <th>Коэф. шины</th>
+                <th>Коэф. покрытия</th>
+                <th>Температура</th>
+                <th>Вес авто</th>
+                <th>Давление (результат)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .request_entries }}
+            {{ if $.tires }}
+                {{ $tire := index $.tires .TireID }}
+                {{ if $tire.ID }}
+                <tr>
+                    <td class="tire-cell">
+                        <img src="http://localhost:9000/test/{{ $tire.Photo }}" alt="{{ $tire.Title }}">
+                        <span>{{ $tire.Title }}</span>
+                    </td>
+                    <td class="coeff">{{ $tire.TireCoefficient }}</td>
+                    <td class="coeff">{{ .CoatingCoeff }}</td>
+                    <td>{{ $.request.AirTemperature }}°C</td>
+                    <td>{{ $.request.CarWeight }} кг</td>
+                    <td class="pressure-value">{{ printf "%.2f" .Pressure }} кПа</td>
+                </tr>
+                {{ end }}
+            {{ end }}
+            {{ end }}
+        </tbody>
+    </table>
+
+    {{ else }}
+    <p style="color: #666; font-style: italic; padding: 20px; background: #f9f9f9; border-radius: 6px;">
+        Заявка Tire_pressure пуста
+    </p>
+    {{ end }}
+</main>
+</body>
+</html>

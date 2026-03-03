@@ -1,0 +1,82 @@
+<html lang="ru">
+<head>
+    <title>{{ .tire.Title }} — Подробная информация</title>
+    <link rel="stylesheet" href="/static/styles/index_style.css">
+    <style>
+        /* Стили для сворачивания описания — добавляем точечно, не ломая основной CSS */
+        .vibes-description {
+            position: relative;
+            max-height: 4.4rem; /* ~2 строки при line-height 1.4 */
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .vibes-description.expanded {
+            max-height: 500px; /* достаточно для любого описания */
+        }
+        .read-more {
+            color: #ed1c24;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .read-more:hover {
+            color: #c7181e;
+            text-decoration: underline;
+        }
+        .fade-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2.2rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        .vibes-description.expanded + .fade-overlay,
+        .vibes-description.expanded ~ .fade-overlay {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="vibes-page">
+
+<header class="header-center">
+    <div class="header-inner" style="display: flex; justify-content: center;">
+        <h1 class="logo">
+            <a href="/tires">Домой</a>
+        </h1>
+    </div>
+</header>
+
+<div class="vibes-viewport">
+
+    {{ if .tire.Video }}
+    <video class="vibes-video" controls autoplay muted loop>
+        <source src="http://localhost:9000/test/{{ .tire.Video }}" type="video/mp4">
+    </video>
+    <div class="vibes-overlay"></div>
+    {{ end }}
+
+    <div class="vibes-content">
+
+        <h1 class="vibes-title">{{ .tire.Title }}</h1>
+
+        <p class="vibes-description" id="desc-{{ .tire.ID }}">{{ .tire.Description }}</p>
+        <span class="fade-overlay" id="fade-{{ .tire.ID }}"></span>
+
+        <div class="vibes-manager">
+            <span class="vibes-manager__label">Коэффициент шины</span>
+            <span class="vibes-manager__name">
+                {{ .tire.TireCoefficient }}
+            </span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
