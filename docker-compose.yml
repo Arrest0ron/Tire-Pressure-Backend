@@ -1,6 +1,5 @@
-version: '3.7'
+version: '3.8'
 
-# Settings and configurations that are common for all containers
 x-minio-common: &minio-common
   image: quay.io/minio/minio:RELEASE.2022-10-15T19-57-03Z
   command: server --console-address ":9001" http://minio{1...4}/data{1...2}
@@ -19,9 +18,6 @@ x-minio-common: &minio-common
     timeout: 20s
     retries: 3
 
-# starts 4 docker containers running minio server instances.
-# using nginx reverse proxy, load balancing, you can access
-# it through port 9000.
 services:
   minio1:
     <<: *minio-common
@@ -51,6 +47,55 @@ services:
       - data4-1:/data1
       - data4-2:/data2
 
+  postgres:
+    image: postgres:17
+    container_name: rip-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./InitDatabase:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: rip-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  adminer:
+    image: adminer:latest
+    container_name: rip-adminer
+    ports:
+      - "8082:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
   nginx:
     image: nginx:1.19.2-alpine
     hostname: nginx
@@ -64,31 +109,11 @@ services:
       - minio2
       - minio3
       - minio4
-
-
-version: '3'
-
-services:
-  postgres:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydb
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  adminer:
-    image: adminer:latest
-    ports:
-      - "8082:8082"
-    depends_on:
-      - postgres
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  postgres_data:
   data1-1:
   data1-2:
   data2-1:
@@ -97,3 +122,5 @@ volumes:
   data3-2:
   data4-1:
   data4-2:
+  postgres-data:
+  redis-data:

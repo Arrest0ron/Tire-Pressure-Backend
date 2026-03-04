@@ -75,6 +75,14 @@
                 {{ .tire.TireCoefficient }}
             </span>
         </div>
+
+        <!-- ✅ Кнопка добавления в корзину -->
+        <form method="POST" action="/tire_pressure/add_tire" style="display: inline-block; margin-top: 5px;">
+            <input type="hidden" name="tire_id" value="{{ .tire.ID }}">
+            <button type="submit" class="btn btn-success" style="padding: 6px 12px; font-size: 13px; width: 100%;">
+                Добавить в корзину
+            </button>
+        </form>
     </div>
 </div>
 
