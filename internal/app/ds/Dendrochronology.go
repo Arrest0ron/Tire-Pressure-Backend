@@ -5,33 +5,22 @@ import (
 	"time"
 )
 
-const (
-	StatusDraft     = "черновик"
-	StatusDeleted   = "удалён"
-	StatusFormed    = "сформирован"
-	StatusCompleted = "завершён"
-	StatusRejected  = "отклонён"
-)
-
-type TirePressure struct {
-	TirePressureID            uint         `gorm:"primaryKey"`
+type Dendrochronology struct {
+	ID            uint         `gorm:"primaryKey"`
 	Status        string       `gorm:"type:varchar(20);not null"`
 	DateCreate    time.Time    `gorm:"not null"`
 	DateFormed    sql.NullTime `gorm:"default:null"`
 	DateCompleted sql.NullTime `gorm:"default:null"`
 	CreatorID     uint         `gorm:"not null"`
 	ModeratorID   *uint        `gorm:"default:null"`
-	AirTemperature float64             `gorm:"not null"`
-	CarWeight      float64             `gorm:"not null"`
+	TotalSamples  *int         `gorm:"default:null"`
+	BuildDate     *int         `gorm:"column:build_date;default:null"`
 
 	Creator   Users  `gorm:"foreignKey:CreatorID"`
 	Moderator *Users `gorm:"foreignKey:ModeratorID"`
-
-
-
 }
 
 // TableName — таблица заявок в БД.
-func (TirePressure) TableName() string {
+func (Dendrochronology) TableName() string {
 	return "dendrochronologies"
 }

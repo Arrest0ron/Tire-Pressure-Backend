@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"web_backend/internal/app/config"
-	"web_backend/internal/app/handler"
+	"metoda/internal/app/config"
+	"metoda/internal/app/handler"
 )
 
 type Application struct {

@@ -4,8 +4,8 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"web_backend/internal/app/ds"
-	"web_backend/internal/app/dsn"
+	"metoda/internal/app/ds"
+	"metoda/internal/app/dsn"
 )
 
 func main() {
@@ -17,9 +17,9 @@ func main() {
 
 	err = db.AutoMigrate(
 		&ds.Users{},
-		&ds.Tire{},
-		&ds.TirePressure{},
-		&ds.TirePressureEntry{},
+		&ds.Construction{},
+		&ds.Dendrochronology{},
+		&ds.DendrochronologyConstruction{},
 	)
 	if err != nil {
 		panic("cant migrate db")

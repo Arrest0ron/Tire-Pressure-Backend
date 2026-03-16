@@ -1,24 +1,37 @@
-version: '3.8'
-
 x-minio-common: &minio-common
   image: quay.io/minio/minio:RELEASE.2022-10-15T19-57-03Z
   command: server --console-address ":9001" http://minio{1...4}/data{1...2}
   environment:
-    MINIO_ACCESS_KEY: minio
-    MINIO_SECRET_KEY: minio124
+    MINIO_ACCESS_KEY: lexa
+    MINIO_SECRET_KEY: qwerty123
   expose:
     - "9000"
     - "9001"
-    # environment:
-    # MINIO_ROOT_USER: minioadmin
-    # MINIO_ROOT_PASSWORD: minioadmin
   healthcheck:
     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
     interval: 30s
-    timeout: 20s
+    timeout: 20s  
     retries: 3
 
 services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qwerty123
+      POSTGRES_DB: dendro_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8888:8080"
+    depends_on:
+      - postgres
+
   minio1:
     <<: *minio-common
     hostname: minio1
@@ -47,73 +60,22 @@ services:
       - data4-1:/data1
       - data4-2:/data2
 
-  postgres:
-    image: postgres:17
-    container_name: rip-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mydb
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./InitDatabase:/docker-entrypoint-initdb.d
-    restart: unless-stopped
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d mydb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:latest
-    container_name: rip-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  adminer:
-    image: adminer:latest
-    container_name: rip-adminer
-    ports:
-      - "8082:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - app-network
-
   nginx:
     image: nginx:1.19.2-alpine
     hostname: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9090:9000"
+      - "9091:9001"
     depends_on:
       - minio1
       - minio2
       - minio3
       - minio4
-networks:
-  app-network:
-    driver: bridge
 
 volumes:
+  postgres_data:
   data1-1:
   data1-2:
   data2-1:
@@ -122,5 +84,3 @@ volumes:
   data3-2:
   data4-1:
   data4-2:
-  postgres-data:
-  redis-data:

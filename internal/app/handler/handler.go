@@ -3,40 +3,53 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"web_backend/internal/app/config"
-	"web_backend/internal/app/repository"
+	"metoda/internal/app/repository"
 )
+
+const minioBaseURL = "http://localhost:9090/constructions"
 
 type Handler struct {
 	Repository *repository.Repository
-	Config     *config.Config
 }
 
-func NewHandler(r *repository.Repository, cfg *config.Config) *Handler {
+func NewHandler(r *repository.Repository) *Handler {
 	return &Handler{
 		Repository: r,
-		Config:     cfg,
 	}
 }
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
-	// Новые маршруты для шин
-	router.GET("/", h.GetTires)
-	router.GET("/tires", h.GetTires)
-	router.GET("/tire/:id", h.GetTire)
-	router.GET("/tire_pressure/:id", h.GetTirePressure)
+	router.GET("/", h.GetConstructions)
+	router.GET("/construction/:id", h.GetConstruction)
+	router.GET("/dendrochronology", h.GetDendrochronology)
+	router.POST("/dendrochronology/update-item", h.UpdateDendrochronologyItem)
+	router.POST("/form-dendrochronology", h.FormDendrochronology)
+	router.POST("/add-to-dendrochronology", h.AddToDendrochronology)
+	router.POST("/delete-dendrochronology", h.DeleteDendrochronology)
 
-	// Маршруты для управления заявками на расчёт давления
-	router.POST("/tire_pressure/add", h.AddTireToPressure)
-	router.POST("/tire_pressure/update_coeff", h.UpdateCoatingCoeff)
-	router.POST("/tire_pressure/delete", h.DeleteTireEntry)
+	// домен Construction (услуги)
+	router.GET("/api/constructions", h.APIGetConstructions)
+	router.GET("/api/constructions/:id", h.APIGetConstruction)
+	router.POST("/api/constructions", h.APICreateConstruction)
 
-	// Маршруты для добавления услуг в заявку
-	router.POST("/tire_pressure/add_tire", h.AddTireToPressure)
+	// домен М-М (dendrochronology_constructions)
+	router.POST("/api/constructions/:id/add-to-dendrochronology", h.APIAddToCart)
+	router.DELETE("/api/dendrochronology-constructions/:construction_id/:dendrochronology_id", h.APIDeleteFromCart)
+	router.PUT("/api/dendrochronology-constructions/:construction_id/:dendrochronology_id", h.APIUpdateCartItem)
 
-	// Новые маршруты для управления заявками
-	router.POST("/tire_pressure/delete_request", h.DeleteTirePressure)
-	router.POST("/tire_pressure/complete", h.CompleteTirePressure)
+	// домен Dendrochronology (заявки)
+	router.GET("/api/dendrochronologies/cart", h.APIGetCart)
+	router.GET("/api/dendrochronologies", h.APIGetDendrochronologies)
+	router.GET("/api/dendrochronologies/:id", h.APIGetDendrochronology)
+	router.PUT("/api/dendrochronologies/:id", h.APIUpdateDendrochronology)
+	router.PUT("/api/dendrochronologies/:id/form", h.APIFormDendrochronology)
+	router.PUT("/api/dendrochronologies/:id/finish", h.APIFinishDendrochronology)
+	router.DELETE("/api/dendrochronologies/:id", h.APIDeleteDendrochronology)
+
+	// домен Users
+	router.POST("/api/users/signup", h.APISignUp)
+	router.POST("/api/users/signin", h.APISignIn)
+	router.POST("/api/users/signout", h.APISignOut)
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {

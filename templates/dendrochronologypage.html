@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дендрохронологический анализ древесины</title>
+  <link rel="stylesheet" href="/static/styles/styles.css">
+</head>
+<body>
+<div class="dendrochronologypage">
+  <div class="header-bar_app">
+    <a href="/" class="prototype-link">
+      <img src="/static/img/YURDIS_logo.svg" class="YURDIS_logo_app" alt="logo" />
+      <img src="/static/img/YURDIS_logo_text.svg" class="YURDIS_logo_text" alt="logo-text" />
+    </a>
+  </div>
+
+  {{ if .dendrochronology }}
+  <div class="app_fields app_characteristics">
+    <p class="app_name">Заявка № {{ .dendrochronology.ID }} — Датировка деревянных конструкций</p>
+    <div class="date_of_construction app_characteristics">
+      <p>
+        Предварительная дата постройки:
+        {{ if gt .buildYear 0 }}
+          <span id="build-date">{{ .buildYear }} г.</span>
+        {{ else }}
+          <span id="build-date">—</span>
+        {{ end }}
+      </p>
+    </div>
+  </div>
+
+  <div class="app-table-header">
+    <span></span>
+    <span>Тип деревянной конструкции</span>
+    <span>Use-life</span>
+    <span>Поправка на дату</span>
+    <span>Дата рубки</span>
+    <span>Кол-во ед.</span>
+  </div>
+
+  {{ range .constructions }}
+  <form class="app-row" action="/dendrochronology/update-item" method="POST">
+    <input type="hidden" name="item_id" value="{{ .ID }}">
+    {{ if .ImageURL }}
+    <img src="{{ $.minioBase }}/{{ .ImageURL }}" class="app-row-image" alt="{{ .ConstructionTitle }}" />
+    {{ else }}
+    <div class="app-row-image app-row-image-placeholder"></div>
+    {{ end }}
+    <span>{{ .ConstructionTitle }}</span>
+    <span>{{ .UseLife }}</span>
+    <div class="qty-controls">
+      <input
+        type="number"
+        class="qty-input"
+        name="date_correction"
+        min="0"
+        value="{{ .DateCorrection }}"
+        placeholder="Поправка" />
+    </div>
+    <div class="qty-controls">
+      <input
+        type="number"
+        class="qty-input"
+        name="cutting_date"
+        min="0"
+        value="{{ .CuttingDate }}"
+        placeholder="Год рубки" />
+    </div>
+    <div class="qty-controls">
+      <input
+        type="number"
+        class="qty-input"
+        name="samples_count"
+        min="1"
+        value="{{ .SamplesCount }}" />
+    </div>
+    <button type="submit" tabindex="-1" class="qty-submit-hidden" aria-hidden="true"></button>
+  </form>
+  {{ end }}
+  {{ end }}
+
+  <div class="app-actions">
+    <form action="/form-dendrochronology" method="POST" style="display: inline;">
+      <input type="hidden" name="dendrochronology_id" value="{{ .dendrochronology.ID }}">
+      <button type="submit" class="btn-submit">Сформировать заявку</button>
+    </form>
+    <form action="/delete-dendrochronology" method="POST" style="display: inline;">
+      <input type="hidden" name="dendrochronology_id" value="{{ .dendrochronology.ID }}">
+      <button type="submit" class="btn-delete">Удалить заявку</button>
+    </form>
+  </div>
+
+</div>
+</body>
+</html>

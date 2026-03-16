@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ .construction.ConstructionTitle }} — ЮРДИС</title>
+  <link rel="stylesheet" href="/static/styles/styles.css">
+</head>
+<body>
+<div class="productpage">
+
+  <div class="header-bar_app">
+    <a href="/" class="prototype-link">
+      <img src="/static/img/YURDIS_logo.svg" class="YURDIS_logo_app" alt="logo" />
+      <img src="/static/img/YURDIS_logo_text.svg" class="YURDIS_logo_text" alt="ЮРДИС" />
+    </a>
+  </div>
+
+  <div class="product-card">
+    {{ if .construction.VideoURL }}
+    <div class="product-media-wrap">
+      <video autoplay muted loop playsinline class="product-video">
+        <source src="{{ .minioBase }}/{{ .construction.VideoURL }}" type="video/mp4" />
+      </video>
+    </div>
+    {{ else if .construction.ImageURL }}
+    <div class="product-media-wrap">
+      <img src="{{ .minioBase }}/{{ .construction.ImageURL }}" class="product-image" alt="{{ .construction.ConstructionTitle }}" />
+    </div>
+    {{ end }}
+  </div>
+
+</div>
+</body>
+</html>

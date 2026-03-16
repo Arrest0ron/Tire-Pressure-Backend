@@ -1,12 +1,25 @@
 package repository
 
 import (
+	"errors"
+
+	"github.com/minio/minio-go/v7"
+	minioClient "metoda/internal/app/minioClient"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+var (
+	ErrNotFound     = errors.New("not found")
+	ErrAlreadyExists = errors.New("already exists")
+	ErrNotAllowed   = errors.New("not allowed")
+	ErrNoDraft      = errors.New("no draft for this user")
+)
+
 type Repository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	mc     *minio.Client
+	userID int
 }
 
 func New(dsn string) (*Repository, error) {
@@ -15,7 +28,26 @@ func New(dsn string) (*Repository, error) {
 		return nil, err
 	}
 
+	mc, err := minioClient.InitMinio()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repository{
-		db: db,
+		db:     db,
+		mc:     mc,
+		userID: 1,
 	}, nil
+}
+
+func (r *Repository) GetUserID() int {
+	return r.userID
+}
+
+func (r *Repository) SetUserID(id int) {
+	r.userID = id
+}
+
+func (r *Repository) SignOut() {
+	r.userID = 0
 }

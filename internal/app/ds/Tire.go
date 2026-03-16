@@ -1,11 +1,14 @@
 package ds
 
 type Tire struct {
-	ID              int     `gorm:"primaryKey" json:"id"`
-	Title           string  `gorm:"type:varchar(255);not null" json:"title"`
-	Description     string  `gorm:"type:text" json:"description"`
-	Photo           string  `gorm:"type:varchar(255)" json:"photo"`
-	Video           string  `gorm:"type:varchar(255)" json:"video"`
-	TireCoefficient float64 `gorm:"not null" json:"tire_coefficient"`
-	IsDelete        bool    `gorm:"type:boolean;default:false" json:"is_delete"`
+	TireID                   uint    `gorm:"primaryKey"`
+	TireTitle                string  `gorm:"type:varchar(100);not null"`
+	Description              string  `gorm:"type:text"`
+	Photo                    string  `gorm:"type:varchar(255)"`
+	Video                    string  `gorm:"type:varchar(255)"`
+	TireMaterialCoefficient  float64 `gorm:"not null"`
+	TireThicknessCoefficient float64 `gorm:"not null"`
+	IsDelete                 bool    `'gorm:"type:text;not null"`
 }
+
+// Done
