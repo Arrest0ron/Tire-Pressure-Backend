@@ -10,16 +10,19 @@ import (
 
 func main() {
 	_ = godotenv.Load()
-	db, err := gorm.Open(postgres.Open(dsn.FromEnv()), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn.FromEnv()), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true, // ⬅️ Отключаем FK при миграции
+	})
 	if err != nil {
 		panic("failed to connect database")
 	}
 
+	// Мигрируем в правильном порядке: сначала таблицы без FK, потом с FK
 	err = db.AutoMigrate(
-		&ds.Users{},
-		&ds.Construction{},
-		&ds.Dendrochronology{},
-		&ds.DendrochronologyConstruction{},
+		&ds.Users{},             // 1. Без внешних ключей
+		&ds.Tire{},              // 2. Без внешних ключей
+		&ds.TirePressure{},      // 3. Без внешних ключей
+		&ds.TirePressureEntry{}, // 4. С внешними ключами (последним!)
 	)
 	if err != nil {
 		panic("cant migrate db")

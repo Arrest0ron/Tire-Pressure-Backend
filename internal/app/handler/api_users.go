@@ -62,11 +62,13 @@ func (h *Handler) APISignIn(ctx *gin.Context) {
 		return
 	}
 
+	// ✅ SINGLETON: SetUserID уже вызван в repository.SignIn()
 	ctx.JSON(http.StatusOK, serializer.UserToJSON(u))
 }
 
 // POST /api/users/signout  (stub for lab4 auth)
 func (h *Handler) APISignOut(ctx *gin.Context) {
-	h.Repository.SignOut()
+	// ✅ SINGLETON: замена h.Repository.SignOut() → repository.SignOut()
+	repository.SignOut()
 	ctx.JSON(http.StatusOK, gin.H{"status": "signed_out"})
 }

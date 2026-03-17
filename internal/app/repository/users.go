@@ -77,6 +77,7 @@ func (r *Repository) SignIn(j serializer.UserJSON) (ds.Users, error) {
 		return ds.Users{}, fmt.Errorf("неверный логин или пароль")
 	}
 
-	r.SetUserID(int(u.ID))
+	// ✅ SINGLETON: замена r.SetUserID() → SetUserID()
+	SetUserID(int(u.ID))
 	return u, nil
 }

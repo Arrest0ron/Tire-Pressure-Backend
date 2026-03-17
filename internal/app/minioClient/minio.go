@@ -13,7 +13,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-const ConstructionsBucket = "constructions"
+const TiresBucket = "tires"
 
 func NewMinioClient(endpoint, accessKey, secretKey string, useSSL bool) (*minio.Client, error) {
 	return minio.New(endpoint, &minio.Options{

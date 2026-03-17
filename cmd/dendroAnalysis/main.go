@@ -30,6 +30,6 @@ func main() {
 
 	hand := handler.NewHandler(rep)
 
-	dendrochronology := pkg.NewApp(conf, router, hand)
-	dendrochronology.RunApp()
+	app := pkg.NewApp(conf, router, hand)
+	app.RunApp()
 }

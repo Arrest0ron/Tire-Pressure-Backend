@@ -4,22 +4,39 @@ import (
 	"errors"
 
 	"github.com/minio/minio-go/v7"
-	minioClient "metoda/internal/app/minioClient"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	minioClient "metoda/internal/app/minioClient"
 )
 
 var (
-	ErrNotFound     = errors.New("not found")
+	ErrNotFound      = errors.New("not found")
 	ErrAlreadyExists = errors.New("already exists")
-	ErrNotAllowed   = errors.New("not allowed")
-	ErrNoDraft      = errors.New("no draft for this user")
+	ErrNotAllowed    = errors.New("not allowed")
+	ErrNoDraft       = errors.New("no draft for this user")
 )
 
+// ─── SINGLETON: пользователь (для лаб 1-3, до авторизации) ─────────────────
+
+var currentUserID int = 1
+
+func GetUserID() int {
+	return currentUserID
+}
+
+func SetUserID(id int) {
+	currentUserID = id
+}
+
+func SignOut() {
+	currentUserID = 0
+}
+
+// ─── Repository ─────────────────────────────────────────────────────────────
+
 type Repository struct {
-	db     *gorm.DB
-	mc     *minio.Client
-	userID int
+	db *gorm.DB
+	mc *minio.Client
 }
 
 func New(dsn string) (*Repository, error) {
@@ -34,20 +51,7 @@ func New(dsn string) (*Repository, error) {
 	}
 
 	return &Repository{
-		db:     db,
-		mc:     mc,
-		userID: 1,
+		db: db,
+		mc: mc,
 	}, nil
-}
-
-func (r *Repository) GetUserID() int {
-	return r.userID
-}
-
-func (r *Repository) SetUserID(id int) {
-	r.userID = id
-}
-
-func (r *Repository) SignOut() {
-	r.userID = 0
 }

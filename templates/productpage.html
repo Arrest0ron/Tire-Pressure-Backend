@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ .construction.ConstructionTitle }} — ЮРДИС</title>
+  <title>{{ .tire.TireTitle }} — ЮРДИС</title>
   <link rel="stylesheet" href="/static/styles/styles.css">
 </head>
 <body>
@@ -17,15 +17,15 @@
   </div>
 
   <div class="product-card">
-    {{ if .construction.VideoURL }}
+    {{ if .tire.Video }}
     <div class="product-media-wrap">
       <video autoplay muted loop playsinline class="product-video">
-        <source src="{{ .minioBase }}/{{ .construction.VideoURL }}" type="video/mp4" />
+        <source src="{{ .minioBase }}/{{ .tire.Video }}" type="video/mp4" />
       </video>
     </div>
-    {{ else if .construction.ImageURL }}
+    {{ else if .tire.Photo }}
     <div class="product-media-wrap">
-      <img src="{{ .minioBase }}/{{ .construction.ImageURL }}" class="product-image" alt="{{ .construction.ConstructionTitle }}" />
+      <img src="{{ .minioBase }}/{{ .tire.Photo }}" class="product-image" alt="{{ .tire.TireTitle }}" />
     </div>
     {{ end }}
   </div>

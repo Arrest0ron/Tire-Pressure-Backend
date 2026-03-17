@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Определение оптимального давления в шинах</title>
+  <link rel="stylesheet" href="/static/styles/styles.css">
+</head>
+<body>
+<div class="dendrochronologypage">
+  <div class="header-bar_app">
+    <a href="/" class="prototype-link">
+      <img src="/static/img/YURDIS_logo.svg" class="YURDIS_logo_app" alt="logo" />
+      <img src="/static/img/YURDIS_logo_text.svg" class="YURDIS_logo_text" alt="logo-text" />
+    </a>
+  </div>
+
+  {{ if .tirePressure }}
+  <div class="app_fields app_characteristics">
+    <p class="app_name">Заявка № {{ .tirePressure.TirePressureID }} — Расчёт давления в шинах</p>
+
+    <!-- ✅ Отображение статуса -->
+    {{ if eq .tirePressure.Status "черновик" }}
+    <p class="status-draft">📝 Черновик</p>
+    {{ else if eq .tirePressure.Status "сформирован" }}
+    <p class="status-formed">✅ Заявка сформирована</p>
+    {{ else if eq .tirePressure.Status "завершён" }}
+    <p class="status-completed">✅ Заявка завершена модератором</p>
+    {{ else if eq .tirePressure.Status "отклонён" }}
+    <p class="status-rejected">❌ Заявка отклонена модератором</p>
+    {{ else if eq .tirePressure.Status "удалён" }}
+    <p class="status-deleted">❌ Заявка удалена</p>
+    {{ end }}
+
+    <div class="date_of_construction app_characteristics">
+      <p>
+        Температура воздуха:
+        <span id="air-temperature">{{ .tirePressure.AirTemperature }} °C</span>
+        &nbsp;|&nbsp;
+        Вес автомобиля с нагрузкой:
+        <span id="car-weight">{{ .tirePressure.CarWeight }} кг</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="app-table-header">
+    <span></span>
+    <span>Тип шины</span>
+    <span>Материал / Толщина</span>
+    <span>Коэф. покрытия</span>
+    <span>Давление (результат)</span>
+  </div>
+
+  {{ range .tires }}
+  <form class="app-row" action="/tire-pressure/update-item" method="POST">
+    <input type="hidden" name="item_id" value="{{ .ID }}">
+    {{ if .Photo }}
+    <img src="{{ $.minioBase }}/{{ .Photo }}" class="app-row-image" alt="{{ .TireTitle }}" />
+    {{ else }}
+    <div class="app-row-image app-row-image-placeholder"></div>
+    {{ end }}
+    <span>{{ .TireTitle }}</span>
+    <span>М: {{ .TireMaterialCoefficient }} | Т: {{ .TireThicknessCoefficient }}</span>
+    <div class="qty-controls">
+      <input
+              type="number"
+              class="qty-input"
+              name="coating_coefficient"
+              min="0.1"
+              step="0.01"
+              value="{{ .CoatingCoefficient }}"
+              placeholder="Коэф. покрытия"
+              {{ if $.readonly }}disabled{{ end }} />
+    </div>
+    <div class="qty-controls">
+      <span class="pressure-result">{{ if gt .Pressure 0.0 }}{{ .Pressure }}{{ else }}—{{ end }} кПа</span>
+    </div>
+    {{ if not $.readonly }}
+    <button type="submit" tabindex="-1" class="qty-submit-hidden" aria-hidden="true"></button>
+    {{ end }}
+  </form>
+  {{ end }}
+
+  <div class="app-actions">
+    {{ if eq .tirePressure.Status "черновик" }}
+    <!-- ✅ Кнопки только для черновика -->
+    <form action="/form-tire-pressure" method="POST" style="display: inline;">
+      <input type="hidden" name="tire_pressure_id" value="{{ .tirePressure.TirePressureID }}">
+      <button type="submit" class="btn-submit">Сформировать заявку</button>
+    </form>
+    <form action="/delete-tire-pressure" method="POST" style="display: inline;">
+      <input type="hidden" name="tire_pressure_id" value="{{ .tirePressure.TirePressureID }}">
+      <button type="submit" class="btn-delete">Удалить заявку</button>
+    </form>
+    {{ else }}
+    <!-- ✅ Для не-черновиков — только кнопка "На главную" -->
+    <a href="/" class="btn-back">← Вернуться на главную</a>
+    {{ end }}
+  </div>
+  {{ else }}
+  <div class="alert alert-error">
+    ❌ Заявка не найдена или недоступна.
+  </div>
+  <p><a href="/">← Вернуться на главную</a></p>
+  {{ end }}
+
+</div>
+</body>
+</html>

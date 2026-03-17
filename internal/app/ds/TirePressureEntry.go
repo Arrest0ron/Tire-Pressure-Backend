@@ -1,14 +1,15 @@
 package ds
 
-type TirePressureEntry  struct {
-	ID                 uint   `gorm:"primaryKey"`
-	TirePressureID uint   `gorm:"not null;uniqueIndex:idx_tire_pressure_entry"`
-	TireID     uint   `gorm:"not null;uniqueIndex:idx_tire_pressure_entry"`
-	CoatingCoeff     float64       `gorm:"default:null"`
-
+type TirePressureEntry struct {
+	ID                 uint    `gorm:"primaryKey"`
+	TirePressureID     uint    `gorm:"not null;uniqueIndex:idx_tire_pressure_entry"`
+	TireID             uint    `gorm:"not null;uniqueIndex:idx_tire_pressure_entry"`
+	CoatingCoefficient float64 `gorm:"default:null"`
 
 	TirePressure TirePressure `gorm:"foreignKey:TirePressureID"`
-	Tire    Tire     `gorm:"foreignKey:TireID"`
+	Tire         Tire         `gorm:"foreignKey:TireID"`
+
+	Pressure float64 `json:"pressure"` // Результат: давление в шине
 }
 
 // TableName — таблица связи заявка–конструкция в БД.

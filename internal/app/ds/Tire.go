@@ -8,7 +8,7 @@ type Tire struct {
 	Video                    string  `gorm:"type:varchar(255)"`
 	TireMaterialCoefficient  float64 `gorm:"not null"`
 	TireThicknessCoefficient float64 `gorm:"not null"`
-	IsDelete                 bool    `'gorm:"type:text;not null"`
+	IsDelete                 bool    `gorm:"type:boolean;not null;default:false"`
 }
 
 // Done

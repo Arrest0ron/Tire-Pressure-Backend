@@ -6,7 +6,7 @@ import (
 	"metoda/internal/app/repository"
 )
 
-const minioBaseURL = "http://localhost:9090/constructions"
+const minioBaseURL = "http://localhost:9090/tires"
 
 type Handler struct {
 	Repository *repository.Repository
@@ -19,32 +19,33 @@ func NewHandler(r *repository.Repository) *Handler {
 }
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
-	router.GET("/", h.GetConstructions)
-	router.GET("/construction/:id", h.GetConstruction)
-	router.GET("/dendrochronology", h.GetDendrochronology)
-	router.POST("/dendrochronology/update-item", h.UpdateDendrochronologyItem)
-	router.POST("/form-dendrochronology", h.FormDendrochronology)
-	router.POST("/add-to-dendrochronology", h.AddToDendrochronology)
-	router.POST("/delete-dendrochronology", h.DeleteDendrochronology)
+	router.GET("/", h.GetTires)
+	router.GET("/tire/:id", h.GetTire)
+	// ✅ Убран отдельный роут для черновика — только /:id (как в оригинале)
+	router.GET("/tire-pressure/:id", h.GetTirePressureByID)
+	router.POST("/tire-pressure/update-item", h.UpdateTirePressureItem)
+	router.POST("/form-tire-pressure", h.FormTirePressure)
+	router.POST("/add-to-tire-pressure", h.AddToTirePressure)
+	router.POST("/delete-tire-pressure", h.DeleteTirePressure)
 
-	// домен Construction (услуги)
-	router.GET("/api/constructions", h.APIGetConstructions)
-	router.GET("/api/constructions/:id", h.APIGetConstruction)
-	router.POST("/api/constructions", h.APICreateConstruction)
+	// домен Tire (услуги)
+	router.GET("/api/tires", h.APIGetTires)
+	router.GET("/api/tires/:id", h.APIGetTire)
+	router.POST("/api/tires", h.APICreateTire)
 
-	// домен М-М (dendrochronology_constructions)
-	router.POST("/api/constructions/:id/add-to-dendrochronology", h.APIAddToCart)
-	router.DELETE("/api/dendrochronology-constructions/:construction_id/:dendrochronology_id", h.APIDeleteFromCart)
-	router.PUT("/api/dendrochronology-constructions/:construction_id/:dendrochronology_id", h.APIUpdateCartItem)
+	// домен М-М (tire_pressure_entries)
+	router.POST("/api/tires/:id/add-to-tire-pressure", h.APIAddToCart)
+	router.DELETE("/api/tire-pressure-entries/:tire_id/:tire_pressure_id", h.APIDeleteFromCart)
+	router.PUT("/api/tire-pressure-entries/:tire_id/:tire_pressure_id", h.APIUpdateCartItem)
 
-	// домен Dendrochronology (заявки)
-	router.GET("/api/dendrochronologies/cart", h.APIGetCart)
-	router.GET("/api/dendrochronologies", h.APIGetDendrochronologies)
-	router.GET("/api/dendrochronologies/:id", h.APIGetDendrochronology)
-	router.PUT("/api/dendrochronologies/:id", h.APIUpdateDendrochronology)
-	router.PUT("/api/dendrochronologies/:id/form", h.APIFormDendrochronology)
-	router.PUT("/api/dendrochronologies/:id/finish", h.APIFinishDendrochronology)
-	router.DELETE("/api/dendrochronologies/:id", h.APIDeleteDendrochronology)
+	// домен TirePressure (заявки)
+	router.GET("/api/tire-pressures/cart", h.APIGetCart)
+	router.GET("/api/tire-pressures", h.APIGetTirePressures)
+	router.GET("/api/tire-pressures/:id", h.APIGetTirePressure)
+	router.PUT("/api/tire-pressures/:id", h.APIUpdateTirePressure)
+	router.PUT("/api/tire-pressures/:id/form", h.APIFormTirePressure)
+	router.PUT("/api/tire-pressures/:id/finish", h.APIFinishTirePressure)
+	router.DELETE("/api/tire-pressures/:id", h.APIDeleteTirePressure)
 
 	// домен Users
 	router.POST("/api/users/signup", h.APISignUp)
