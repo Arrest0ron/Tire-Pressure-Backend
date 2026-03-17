@@ -9,12 +9,13 @@ INSERT INTO users (login, password, is_moderator) VALUES
     ON CONFLICT (login) DO NOTHING;
 
 -- Insert Tires (Services)
+-- ✅ Photo и Video указаны имена файлов из minio_upload/
 INSERT INTO tires (tire_title, tire_material_coefficient, tire_thickness_coefficient, description, photo, video, is_delete) VALUES
-                                                                                                                                ('Летняя шина Michelin', 1.2, 8.5, 'Летняя шина для легковых автомобилей, хороший сцепление на сухом асфальте', '', '', false),
-                                                                                                                                ('Зимняя шина Nokian', 1.5, 9.0, 'Зимняя шипованная шина для снежных и ледяных дорог', '', '', false),
-                                                                                                                                ('Всесезонная шина Bridgestone', 1.3, 8.0, 'Универсальная шина для умеренного климата', '', '', false),
-                                                                                                                                ('Грузовая шина Continental', 1.8, 12.0, 'Шина для грузовых автомобилей и фургонов', '', '', false),
-                                                                                                                                ('Спортивная шина Pirelli', 1.1, 7.5, 'Высокопроизводительная шина для спортивных автомобилей', '', '', false)
+                                                                                                                                ('Летняя шина Michelin', 1.2, 8.5, 'Летняя шина для легковых автомобилей, хорошее сцепление на сухом асфальте', 'Michelin Pilot Sport 4S.jpg', 'yellow_black.mp4', false),
+                                                                                                                                ('Зимняя шина Nokian', 1.5, 9.0, 'Зимняя шипованная шина для снежных и ледяных дорог', 'Nokian Hakkapeliitta R5.jpg', 'yellow_black.mp4', false),
+                                                                                                                                ('Всесезонная шина Bridgestone', 1.3, 8.0, 'Универсальная шина для умеренного климата', 'Bridgestone Potenza RE003.jpeg', 'yellow_black.mp4', false),
+                                                                                                                                ('Грузовая шина Continental', 1.8, 12.0, 'Шина для грузовых автомобилей и фургонов', 'Continental AllSeasonContact.jpg', 'yellow_black.mp4', false),
+                                                                                                                                ('Спортивная шина Pirelli', 1.1, 7.5, 'Высокопроизводительная шина для спортивных автомобилей', 'Pirelli Winter Cinturato.jpg', 'yellow_black.mp4', false)
     ON CONFLICT DO NOTHING;
 
 -- Insert TirePressures (Requests)

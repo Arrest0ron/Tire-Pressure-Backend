@@ -3,107 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Определение оптимального давления в шинах</title>
-  <link rel="stylesheet" href="/static/styles/styles.css">
+  <title>Заявка № {{ if .tirePressure }}{{ .tirePressure.TirePressureID }}{{ else }}—{{ end }} — ЮРДИС</title>
+  <link rel="stylesheet" href="/static/styles/styles.css?v=20260318">
 </head>
 <body>
-<div class="dendrochronologypage">
-  <div class="header-bar_app">
-    <a href="/" class="prototype-link">
-      <img src="/static/img/YURDIS_logo.svg" class="YURDIS_logo_app" alt="logo" />
-      <img src="/static/img/YURDIS_logo_text.svg" class="YURDIS_logo_text" alt="logo-text" />
-    </a>
+
+<!-- ✅ HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <a href="/">
+        <img src="/static/img/YURDIS_logo.svg" alt="logo" style="height: 40px;" />
+      </a>
+    </div>
   </div>
+</header>
+
+<!-- ✅ MAIN CONTENT -->
+<main class="main-content">
 
   {{ if .tirePressure }}
-  <div class="app_fields app_characteristics">
-    <p class="app_name">Заявка № {{ .tirePressure.TirePressureID }} — Расчёт давления в шинах</p>
 
-    <!-- ✅ Отображение статуса -->
-    {{ if eq .tirePressure.Status "черновик" }}
-    <p class="status-draft">📝 Черновик</p>
-    {{ else if eq .tirePressure.Status "сформирован" }}
-    <p class="status-formed">✅ Заявка сформирована</p>
-    {{ else if eq .tirePressure.Status "завершён" }}
-    <p class="status-completed">✅ Заявка завершена модератором</p>
-    {{ else if eq .tirePressure.Status "отклонён" }}
-    <p class="status-rejected">❌ Заявка отклонена модератором</p>
-    {{ else if eq .tirePressure.Status "удалён" }}
-    <p class="status-deleted">❌ Заявка удалена</p>
-    {{ end }}
-
-    <div class="date_of_construction app_characteristics">
-      <p>
-        Температура воздуха:
-        <span id="air-temperature">{{ .tirePressure.AirTemperature }} °C</span>
-        &nbsp;|&nbsp;
-        Вес автомобиля с нагрузкой:
-        <span id="car-weight">{{ .tirePressure.CarWeight }} кг</span>
-      </p>
-    </div>
-  </div>
-
-  <div class="app-table-header">
-    <span></span>
-    <span>Тип шины</span>
-    <span>Материал / Толщина</span>
-    <span>Коэф. покрытия</span>
-    <span>Давление (результат)</span>
-  </div>
-
-  {{ range .tires }}
-  <form class="app-row" action="/tire-pressure/update-item" method="POST">
-    <input type="hidden" name="item_id" value="{{ .ID }}">
-    {{ if .Photo }}
-    <img src="{{ $.minioBase }}/{{ .Photo }}" class="app-row-image" alt="{{ .TireTitle }}" />
-    {{ else }}
-    <div class="app-row-image app-row-image-placeholder"></div>
-    {{ end }}
-    <span>{{ .TireTitle }}</span>
-    <span>М: {{ .TireMaterialCoefficient }} | Т: {{ .TireThicknessCoefficient }}</span>
-    <div class="qty-controls">
-      <input
-              type="number"
-              class="qty-input"
-              name="coating_coefficient"
-              min="0.1"
-              step="0.01"
-              value="{{ .CoatingCoefficient }}"
-              placeholder="Коэф. покрытия"
-              {{ if $.readonly }}disabled{{ end }} />
-    </div>
-    <div class="qty-controls">
-      <span class="pressure-result">{{ if gt .Pressure 0.0 }}{{ .Pressure }}{{ else }}—{{ end }} кПа</span>
-    </div>
-    {{ if not $.readonly }}
-    <button type="submit" tabindex="-1" class="qty-submit-hidden" aria-hidden="true"></button>
-    {{ end }}
-  </form>
+  <!-- ✅ STATUS MESSAGE -->
+  {{ if eq .tirePressure.Status "черновик" }}
+  <div class="status-draft">📝 Черновик</div>
+  {{ else if eq .tirePressure.Status "сформирован" }}
+  <div class="status-formed">✅ Заявка сформирована</div>
+  {{ else if eq .tirePressure.Status "завершён" }}
+  <div class="status-completed">✅ Заявка завершена модератором</div>
+  {{ else if eq .tirePressure.Status "отклонён" }}
+  <div class="status-rejected">❌ Заявка отклонена модератором</div>
+  {{ else if eq .tirePressure.Status "удалён" }}
+  <div class="status-deleted">❌ Заявка удалена</div>
   {{ end }}
 
-  <div class="app-actions">
+  <!-- ✅ CALCULATION FORM -->
+  <div class="calculation-form">
+    <h2>Заявка № {{ .tirePressure.TirePressureID }} — Расчёт давления в шинах</h2>
+
+    <div class="form-row">
+      {{ if eq .tirePressure.Status "черновик" }}
+      <div class="form-group">
+        <label>Температура воздуха</label>
+        <input type="number" name="air_temperature" value="{{ .tirePressure.AirTemperature }}"
+               step="0.1" min="-50" max="50" form="params-form"
+               style="width:120px;padding:8px;border:2px solid #e8e8ec;border-radius:4px;" />
+        <span style="color:#666;">°C</span>
+      </div>
+      <div class="form-group">
+        <label>Вес автомобиля с нагрузкой</label>
+        <input type="number" name="car_weight" value="{{ .tirePressure.CarWeight }}"
+               step="1" min="500" max="5000" form="params-form"
+               style="width:120px;padding:8px;border:2px solid #e8e8ec;border-radius:4px;" />
+        <span style="color:#666;">кг</span>
+      </div>
+      {{ else }}
+      <div class="form-group">
+        <label>Температура воздуха</label>
+        <input type="text" value="{{ .tirePressure.AirTemperature }} °C" disabled />
+      </div>
+      <div class="form-group">
+        <label>Вес автомобиля с нагрузкой</label>
+        <input type="text" value="{{ .tirePressure.CarWeight }} кг" disabled />
+      </div>
+      {{ end }}
+      <div class="form-group">
+        <label>Дата создания</label>
+        <input type="text" value="{{ .tirePressure.DateCreate.Format "02.01.2006 15:04" }}" disabled />
+      </div>
+    </div>
+
     {{ if eq .tirePressure.Status "черновик" }}
-    <!-- ✅ Кнопки только для черновика -->
-    <form action="/form-tire-pressure" method="POST" style="display: inline;">
+    <form id="params-form" action="/tire-pressure/update-params" method="POST" style="display:none;">
+      <input type="hidden" name="tire_pressure_id" value="{{ .tirePressure.TirePressureID }}">
+    </form>
+    {{ end }}
+  </div>
+
+  <!-- ✅ PRESSURE TABLE -->
+  <table class="pressure-table">
+    <thead>
+    <tr>
+      <th style="width: 100px;">Фото</th>
+      <th>Тип шины</th>
+      <th>Материал / Толщина</th>
+      <th>Коэф. покрытия</th>
+      <th>Давление (результат)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range .tires }}
+    <tr>
+      <td class="tire-cell" style="display:flex;align-items:center;gap:10px;">
+        {{ if .Photo }}
+        <img src="{{ $.minioBase }}/{{ .Photo }}"
+             alt="{{ .TireTitle }}"
+             style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block;flex-shrink:0;" />
+        {{ else }}
+        <div style="width:50px;height:50px;background:#f0f0f0;border-radius:4px;flex-shrink:0;"></div>
+        {{ end }}
+        <span>{{ .TireTitle }}</span>
+      </td>
+      <td><strong>{{ .TireTitle }}</strong></td>
+      <td class="coeff">М: {{ .TireMaterialCoefficient }} | Т: {{ .TireThicknessCoefficient }}</td>
+      <td>
+        {{ if not $.readonly }}
+        <form action="/tire-pressure/update-item" method="POST" style="display:inline;" class="coating-form">
+          <input type="hidden" name="item_id" value="{{ .ID }}">
+          <input
+                  type="number"
+                  name="coating_coefficient"
+                  class="coating-input"
+                  data-item-id="{{ .ID }}"
+                  min="0.1"
+                  step="0.01"
+                  value="{{ .CoatingCoefficient }}"
+                  style="width:80px;padding:6px;border:2px solid #e8e8ec;border-radius:4px;"
+          />
+          <button type="submit" style="padding:6px 12px;background:#ed1c24;color:white;border:none;border-radius:4px;cursor:pointer;">✓</button>
+        </form>
+        {{ else }}
+        <span class="coeff">{{ .CoatingCoefficient }}</span>
+        {{ end }}
+      </td>
+      <!-- ✅ ИСПРАВЛЕНО: %.2f ограничивает до 2 знаков -->
+      <td class="pressure-value">{{ if gt .Pressure 0.0 }}{{ printf "%.2f" .Pressure }}{{ else }}—{{ end }} кПа</td>
+    </tr>
+    {{ end }}
+    </tbody>
+  </table>
+
+  <!-- ✅ ACTIONS -->
+  <div class="actions">
+    {{ if eq .tirePressure.Status "черновик" }}
+    <form action="/form-tire-pressure" method="POST" style="display: inline;" onsubmit="return saveAllCoatingsAndSubmit(event)">
       <input type="hidden" name="tire_pressure_id" value="{{ .tirePressure.TirePressureID }}">
       <button type="submit" class="btn-submit">Сформировать заявку</button>
     </form>
     <form action="/delete-tire-pressure" method="POST" style="display: inline;">
       <input type="hidden" name="tire_pressure_id" value="{{ .tirePressure.TirePressureID }}">
-      <button type="submit" class="btn-delete">Удалить заявку</button>
+     
     </form>
     {{ else }}
-    <!-- ✅ Для не-черновиков — только кнопка "На главную" -->
-    <a href="/" class="btn-back">← Вернуться на главную</a>
+    <a href="/" class="btn-back" style="display:inline-block;padding:12px 30px;background:#6b6b6b;color:white;border-radius:6px;text-decoration:none;">← Вернуться на главную</a>
     {{ end }}
   </div>
+
   {{ else }}
-  <div class="alert alert-error">
-    ❌ Заявка не найдена или недоступна.
-  </div>
+
+  <div class="alert alert-error">❌ Заявка не найдена или недоступна.</div>
   <p><a href="/">← Вернуться на главную</a></p>
+
   {{ end }}
 
-</div>
+</main>
+
+{{ if eq .tirePressure.Status "черновик" }}
+<script>
+  function saveAllCoatingsAndSubmit(event) {
+    var tpId = {{ .tirePressure.TirePressureID }};
+    var forms = document.querySelectorAll('.coating-form');
+    var promises = [];
+
+    forms.forEach(function(form) {
+      var itemId = form.querySelector('input[name="item_id"]').value;
+      var coating = form.querySelector('input[name="coating_coefficient"]').value;
+
+      promises.push(fetch('/tire-pressure/update-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'item_id=' + itemId + '&coating_coefficient=' + coating
+      }));
+    });
+
+    Promise.all(promises).then(function() {
+      var airTemp = document.querySelector('input[name="air_temperature"]').value;
+      var carWeight = document.querySelector('input[name="car_weight"]').value;
+
+      fetch('/api/tire-pressures/' + tpId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          air_temperature: parseFloat(airTemp),
+          car_weight: parseFloat(carWeight)
+        })
+      }).then(function(r) {
+        if (r.ok) {
+          event.target.submit();
+        } else {
+          alert('Ошибка обновления параметров');
+          event.preventDefault();
+        }
+      });
+    }).catch(function(e) {
+      alert('Ошибка сохранения коэффициентов: ' + e);
+      event.preventDefault();
+    });
+
+    event.preventDefault();
+    return false;
+  }
+</script>
+{{ end }}
+
 </body>
 </html>

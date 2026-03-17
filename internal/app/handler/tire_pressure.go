@@ -11,9 +11,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ✅ Удалена функция GetTirePressure — теперь только GetTirePressureByID (как в оригинале)
+// ✅ GET /tire-pressure — редирект на черновик по ID
+func (h *Handler) GetTirePressure(ctx *gin.Context) {
+	draft, err := h.Repository.GetDraftTirePressure(uint(repository.GetUserID()))
+	if err != nil {
+		ctx.Redirect(http.StatusFound, "/")
+		return
+	}
+	ctx.Redirect(http.StatusFound, "/tire-pressure/"+strconv.Itoa(int(draft.TirePressureID)))
+}
 
-// ✅ GET /tire-pressure/:id — просмотр заявки по ID (черновик/сформирован/завершён)
+// ✅ GET /tire-pressure/:id — просмотр заявки по ID
 func (h *Handler) GetTirePressureByID(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -27,25 +35,12 @@ func (h *Handler) GetTirePressureByID(ctx *gin.Context) {
 		return
 	}
 
-	// ✅ Проверка доступа:
-	// 1. Удалённые — никому
-	// 2. Черновики — только создателю
-	// 3. Сформированные/завершённые/отклонённые — создателю и модераторам
-	if t.Status == ds.StatusDeleted {
-		ctx.Redirect(http.StatusFound, "/")
-		return
-	}
-
 	if t.Status == ds.StatusDraft && int(t.CreatorID) != repository.GetUserID() {
 		ctx.Redirect(http.StatusFound, "/")
 		return
 	}
 
-	// Проверка для модератора (может видеть все не-удалённые)
-	moderator, _ := h.Repository.GetUserByID(repository.GetUserID())
-	isModerator := moderator.IsModerator
-
-	if t.Status != ds.StatusDraft && int(t.CreatorID) != repository.GetUserID() && !isModerator {
+	if t.Status == ds.StatusDeleted {
 		ctx.Redirect(http.StatusFound, "/")
 		return
 	}
@@ -61,10 +56,11 @@ func (h *Handler) GetTirePressureByID(ctx *gin.Context) {
 		"tirePressure": t,
 		"tires":        views,
 		"minioBase":    minioBaseURL,
-		"readonly":     t.Status != ds.StatusDraft, // ✅ Блокировка полей для не-черновиков
+		"readonly":     t.Status != ds.StatusDraft,
 	})
 }
 
+// ✅ Добавление шины → редирект на главную
 func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 	strId := ctx.PostForm("tire_id")
 	id, err := strconv.Atoi(strId)
@@ -73,7 +69,6 @@ func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 		return
 	}
 
-	// ✅ SINGLETON: замена creatorID → repository.GetUserID()
 	err = h.Repository.AddTireToTirePressure(uint(id), uint(repository.GetUserID()))
 	if err != nil && !strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 		logrus.Error(err)
@@ -81,11 +76,11 @@ func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 		return
 	}
 
+	// ✅ НА ГЛАВНУЮ!
 	ctx.Redirect(http.StatusFound, "/")
 }
 
-// UpdateTirePressureItem обрабатывает обновление одной строки корзины:
-// коэффициент типа покрытия для шины.
+// ✅ Обновление коэффициента → редирект на заявку по ID
 func (h *Handler) UpdateTirePressureItem(ctx *gin.Context) {
 	strId := ctx.PostForm("item_id")
 	itemID, err := strconv.Atoi(strId)
@@ -106,10 +101,18 @@ func (h *Handler) UpdateTirePressureItem(ctx *gin.Context) {
 	if err != nil {
 		logrus.Error(err)
 	}
-	// Редирект с 303 заставляет браузер сделать новый GET, без подстановки кэша
-	ctx.Redirect(http.StatusSeeOther, "/tire-pressure/"+ctx.PostForm("item_id"))
+
+	// ✅ Получаем tire_pressure_id из записи м-м
+	item, err := h.Repository.GetTirePressureEntryByID(uint(itemID))
+	if err != nil {
+		ctx.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+
+	ctx.Redirect(http.StatusSeeOther, "/tire-pressure/"+strconv.Itoa(int(item.TirePressureID)))
 }
 
+// ✅ Формирование → редирект на заявку по ID
 func (h *Handler) FormTirePressure(ctx *gin.Context) {
 	strId := ctx.PostForm("tire_pressure_id")
 	id, err := strconv.Atoi(strId)
@@ -125,10 +128,10 @@ func (h *Handler) FormTirePressure(ctx *gin.Context) {
 		return
 	}
 
-	// ✅ Редирект на страницу просмотра по ID (как в оригинале)
 	ctx.Redirect(http.StatusFound, "/tire-pressure/"+strconv.Itoa(id))
 }
 
+// ✅ Удаление → редирект на главную
 func (h *Handler) DeleteTirePressure(ctx *gin.Context) {
 	strId := ctx.PostForm("tire_pressure_id")
 	id, err := strconv.Atoi(strId)

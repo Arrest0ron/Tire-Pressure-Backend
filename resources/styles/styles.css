@@ -1,521 +1,856 @@
-:root {
-  --font-family-inter: 'Inter', sans-serif;
-  --text-black: rgba(0, 0, 0, 1);
-  --text-white: rgba(255, 255, 255, 1);
-  --text-grey: rgba(51, 51, 51, 1);
-  --accent: rgba(162, 125, 75, 1);
-  --accent-light: rgba(255, 196, 120, 1);
-}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
+
+/* ================= GLOBAL ================= */
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
 }
 
 body {
-  width: 100%;
+  background: #f1f1f1;
+  color: #000;
   min-height: 100vh;
-  overflow-x: hidden;
-  font-family: var(--font-family-inter);
 }
 
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-.prototype-link {
+a {
   text-decoration: none;
   color: inherit;
-  display: contents;
 }
 
-.header-bar {
-  width: 100%;
-  min-height: 140px;
-  background-color: #000;
+/* ================= HEADER ================= */
+
+.header {
+  background: #fafafa;
+  border-bottom: 1px solid #e8e8ec;
+  height: 90px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.header-center {
+  background: #fafafa;
+  border-bottom: 1px solid #e8e8ec;
+  height: 90px;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 16px 40px 24px;
-  flex-shrink: 0;
 }
 
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: 100px;
-  flex-shrink: 0;
+.header-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
-.header-bar .YURDIS_logo {
-  width: 50px;
-  height: 55px;
+.logo a {
+  text-decoration: none;
+  color: #000;
+  font-size: 24px;
+  font-weight: 700;
 }
 
-.header-bar .YURDIS_logo_text {
-  height: 24px;
+.logo img {
+  height: 40px;
   width: auto;
 }
 
-.header-bar .search-form {
-  position: relative;
+/* ================= MAIN ================= */
+
+.main-content {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* ================= SEARCH + ICON ================= */
+
+.header-controls {
   display: flex;
   align-items: center;
-  width: 100%;
-  max-width: 600px;
-  margin-left: 100px;
-  margin-top: 8px;
-  flex-shrink: 0;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
 }
 
-.YURDIS_logo_app {
-  width: 50px;
-  height: 55px;
+.search-box {
+  flex: 1;
+  min-width: 200px;
 }
 
-.YURDIS_logo_text {
-  height: 24px;
-  width: auto;
-}
-
-.mainpage {
+.search-box form {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: #fff;
+  align-items: center;
+  gap: 10px;
 }
 
-.search-input {
-  width: 100%;
-  padding: 10px 50px 10px 20px;
-  border: 1px solid #000;
-  border-radius: 20px;
-  background: #fff;
+.search-box input {
+  flex: 1;
+  max-width: 400px;
+  padding: 12px 15px;
   font-size: 16px;
-  color: var(--text-grey);
+  border-radius: 12px;
+  border: 2px solid #e8e8ec;
   outline: none;
+  transition: border-color 0.3s;
 }
 
-.search-btn {
-  position: absolute;
-  right: 14px;
-  z-index: 2;
-  background: none;
+.search-box input:focus {
+  border-color: #ed1c24;
+}
+
+.search-box input::placeholder {
+  color: #999;
+}
+
+.search-box button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  background: #ed1c24;
+  color: white;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  flex-shrink: 0;
 }
 
-.search-btn svg {
+.search-box button:hover {
+  background: #c7181e;
+}
+
+.search-box button svg {
   width: 20px;
   height: 20px;
 }
 
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  padding: 24px 40px 40px;
-}
+/* ================= CART BUTTON ================= */
 
-.construction-card {
+.cart-btn {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #ed1c24;
+  background: white;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
-  transition: box-shadow 0.2s;
-  text-decoration: none;
-  color: inherit;
-}
-
-.construction-card:hover {
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-
-.card-image {
-  width: 200px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 4px;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #000;
-}
-
-.card-uselife {
-  font-size: 14px;
-  color: var(--text-grey);
-}
-
-.cart-badge {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 100px;
-  height: 100px;
-  z-index: 10;
-}
-
-.cart-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  margin-top: 10px;
-}
-
-.cart-badge .cart-count {
-  position: absolute;
-  top: 65%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: 700;
-  font-size: 24px;
-  color: #fff;
-  pointer-events: none;
-  margin-top: 15px;
-}
-
-.productpage {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #fff;
-}
-
-.product-card {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 40px;
-  gap: 20px;
+  justify-content: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.3s;
 }
 
-.product-media-wrap {
-  width: 360px;
-  height: 640px;
-  border-radius: 20px;
-  overflow: hidden;
+.cart-btn:hover {
+  background: #ed1c24;
+  transform: scale(1.05);
 }
 
-.product-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.cart-btn:hover svg path {
+  fill: white;
+}
+
+.cart-btn svg {
+  width: 28px;
+  height: 28px;
   display: block;
 }
 
-.dendrochronologypage,
-.applicationpage {
-  position: relative;
-  background: #fff;
-  padding-bottom: 40px;
+.cart-btn.cart-inactive {
+  border-color: #ccc;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
-.header-bar_app {
-  width: 100%;
-  height: 140px;
-  background-color: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-shrink: 0;
+.cart-btn.cart-inactive svg path {
+  fill: #ccc;
 }
 
-.app_fields{
-  margin: 30px 40px 0;
-  padding: 24px;
-  border: 1px solid var(--accent);
-  border-radius: 20px;
-}
-
-.app_name {
-  font-weight: 700;
-  font-size: 20px;
-}
-
-.app_characteristics{
-  font-size: 20px;
-}
-
-.date_of_construction {
-  width: 35%;
-  margin-top: 16px;
-  padding: 12px 20px;
-  background: var(--accent-light);
-  border: 1px solid var(--accent);
-  border-radius: 20px;
-}
-
-.app-table-header {
-  display: grid;
-  grid-template-columns: 50px 480px 180px 270px 260px auto;
-  gap: 10px;
-  margin: 20px 40px 0;
-  padding: 16px 20px;
-  background: rgba(250,250,250,1);
-  border-radius: 5px;
-  font-size: 18px;
-  color: #000;
-}
-
-.app-row {
-  display: grid;
-  grid-template-columns: 100px 2fr 1fr 1fr 1fr 1fr auto;
-  gap: 15px;
-  align-items: center;
-  margin: 12px 40px 0;
-  padding: 16px 20px;
-  background: rgba(250,250,250,1);
-  border-radius: 8px;
-  font-size: 16px;
-  color: #000;
-}
-
-.app-row-image {
-  width: 90px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-.qty-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Скрытая кнопка отправки строки: Enter в поле отправляет форму и обновляет предварительную дату */
-.qty-submit-hidden {
+.cart-count {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  clip: rect(0, 0, 0, 0);
-  overflow: hidden;
-  border: 0;
-  padding: 0;
-  margin: -1px;
-}
-
-.qty-form {
-  display: inline-flex;
-}
-
-/* Поле количества без стрелочек — только ввод числа и Enter */
-.qty-input {
-  width: 4em;
-  padding: 6px 10px;
-  font-size: 16px;
-  text-align: center;
-  border: 1px solid rgba(162,125,75,0.5);
-  border-radius: 6px;
-  background: #fff;
-}
-.qty-input::-webkit-outer-spin-button,
-.qty-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.qty-input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.qty-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid rgba(162,125,75,0.5);
-  background: rgba(255,196,120,0.3);
-  font-size: 18px;
-  cursor: pointer;
+  top: -5px;
+  right: -5px;
+  background: #ed1c24;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
-  transition: background 0.2s;
+  border: 2px solid white;
 }
 
-.qty-btn:hover {
-  background: rgba(255,196,120,0.6);
-}
+/* ================= CART BADGE (альтернатива) ================= */
 
-.qty-value {
-  font-size: 16px;
-  min-width: 24px;
-  text-align: center;
-}
-
-.save-btn {
-  padding: 8px 24px;
-  background: var(--accent-light);
-  border: 1px solid var(--accent);
-  border-radius: 32px;
-  font-size: 16px;
-  cursor: pointer;
-  color: #000;
-  transition: background 0.2s;
-}
-
-.save-btn:hover {
-  background: rgba(255,180,90,1);
-}
-
-.app-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  margin: 30px 40px 0;
-}
-
-.btn-submit {
-  padding: 12px 28px;
-  background: var(--accent);
+.cart-badge {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: auto;
+  height: auto;
+  background: transparent;
   border: none;
-  border-radius: 32px;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-submit:hover {
-  background: rgba(140,105,55,1);
-}
-
-.btn-delete {
-  padding: 12px 28px;
-  background: #fff;
-  border: 1px solid var(--accent);
-  border-radius: 32px;
-  color: var(--accent);
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-delete:hover {
-  background: rgba(250,240,230,1);
-}
-
-.construction-card {
-  flex-direction: column;
-}
-
-.card-link {
+  box-shadow: none;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 14px;
-  text-decoration: none;
-  color: inherit;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: transform 0.3s;
 }
 
-.card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
+.cart-badge:hover {
+  transform: scale(1.1);
 }
 
-.btn-add-small {
-  padding: 6px 16px;
-  background: var(--accent-light);
-  border: 1px solid var(--accent);
-  border-radius: 20px;
-  font-size: 13px;
-  cursor: pointer;
-  color: #000;
-  transition: background 0.2s;
-}
-
-.btn-add-small:hover {
-  background: rgba(255,180,90,1);
-}
-
-.btn-delete-small {
-  padding: 6px 16px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  font-size: 13px;
-  cursor: pointer;
-  color: #666;
-  transition: background 0.2s;
-}
-
-.btn-delete-small:hover {
-  background: #f5f5f5;
-}
-
-.card-image-placeholder {
-  background: #eee;
-}
-
-.cart-inactive {
+.cart-badge.cart-inactive {
   opacity: 0.4;
   pointer-events: none;
 }
 
-.product-details {
-  max-width: 600px;
-  padding: 20px 0;
+.cart-badge a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.product-details h2 {
+.cart-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  transition: opacity 0.3s;
+}
+
+.cart-badge:hover .cart-icon {
+  opacity: 0.8;
+}
+
+/* ================= GRID ================= */
+
+.section-title {
+  margin-bottom: 20px;
+  color: #333;
   font-size: 24px;
-  margin-bottom: 16px;
+  font-weight: 700;
 }
 
-.product-details p {
-  font-size: 16px;
-  margin-bottom: 12px;
-  color: var(--text-grey);
+.tires-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
-.product-add-form {
-  margin-top: 20px;
+.tire-card {
+  background: white;
+  border: 1px solid #6b6b6b;
+  border-radius: 6px;
+  display: flex;
+  overflow: hidden;
+  min-height: 180px;
+  transition: box-shadow 0.3s, transform 0.3s;
 }
 
-.product-image {
+.tire-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.tire-left {
+  width: 200px;
+  flex-shrink: 0;
+  background: #f5f5f5;
+}
+
+.tire-left img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.app-row-image-placeholder {
-  background: #eee;
-  border-radius: 5px;
+.device-info {
+  flex: 1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
 }
 
-.app_fields a {
-  color: var(--accent);
+.device-type {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ed1c24;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.pressure-result {
+.tire-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a5fac;
+  transition: color 0.3s;
+  margin: 0;
+}
+
+.tire-title a:hover {
+  color: #ed1c24;
+}
+
+.device-size {
+  font-size: 12px;
+  color: #999;
+}
+
+.device-info p {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.tire-btn {
+  margin-top: 10px;
+  padding: 14px 0;
+  background: #ed1c24;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: block;
+  width: 100%;
+}
+
+.tire-btn:hover {
+  background: #c7181e;
+}
+
+/* ================= ORDER PAGE ================= */
+
+.order-card {
+  display: flex;
+  gap: 30px;
+  background: white;
+  border: 1px solid #6b6b6b;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.order-card .tire-image {
+  width: 200px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.order-details {
+  flex: 1;
+}
+
+.order-details h1 {
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.order-details p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+/* ================= CALCULATION FORM ================= */
+
+.calculation-form {
+  background: white;
+  border: 1px solid #6b6b6b;
+  border-radius: 6px;
+  padding: 25px;
+  margin: 30px 0;
+}
+
+.calculation-form h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #666;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e8e8ec;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #ed1c24;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.result {
+  background: #25282a;
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.result h3 {
+  color: white;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.pressure-value-result {
+  color: #ea5fac;
+  font-size: 28px;
   font-weight: bold;
-  color: #2e7d32;
+}
+
+/* ================= CART ITEMS ================= */
+
+.cart-items .order-card {
+  margin-bottom: 15px;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.actions form {
+  display: inline;
+}
+
+.btn-submit,
+.btn-delete,
+.btn-back {
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-block;
+}
+
+.btn-submit {
+  background: #ed1c24;
+  color: white;
+}
+
+.btn-submit:hover {
+  background: #c7181e;
+}
+
+.btn-delete {
+  background: #6b6b6b;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #4a4a4a;
+}
+
+.btn-back {
+  background: #6b6b6b;
+  color: white;
+  text-decoration: none;
+}
+
+.btn-back:hover {
+  background: #4a4a4a;
+}
+
+/* ================= STATUS MESSAGES ================= */
+
+.status-draft {
+  color: #856404;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin: 15px 0;
+  font-weight: 600;
+}
+
+.status-formed,
+.status-completed {
+  color: #155724;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin: 15px 0;
+  font-weight: 600;
+}
+
+.status-rejected,
+.status-deleted {
+  color: #721c24;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin: 15px 0;
+  font-weight: 600;
+}
+
+/* ================= ALERTS ================= */
+
+.alert {
+  padding: 12px 20px;
+  margin: 20px 0;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* ================= VIBES PAGE ================= */
+
+.vibes-page {
+  min-height: 100vh;
+  background: #f6f7f7;
+}
+
+.vibes-viewport {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  min-height: calc(100vh - 90px);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.vibes-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  background: #000;
+}
+
+.vibes-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+          to top,
+          rgba(0,0,0,0.85) 0%,
+          rgba(0,0,0,0.4) 40%,
+          transparent 70%
+  );
+  pointer-events: none;
+}
+
+.vibes-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 20px 32px;
+  z-index: 5;
+}
+
+.vibes-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.vibes-meta {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 8px;
+}
+
+.vibes-description {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  position: relative;
+  max-height: 4.4rem;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.vibes-description.expanded {
+  max-height: 500px;
+}
+
+.read-more {
+  color: #ed1c24;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.read-more:hover {
+  color: #c7181e;
+  text-decoration: underline;
+}
+
+.fade-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2.2rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.vibes-description.expanded ~ .fade-overlay {
+  opacity: 0;
+}
+
+.vibes-manager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  background: rgba(197, 95, 77, 0.25);
+  border-radius: 10px;
+  border: 1px solid rgba(197, 95, 77, 0.5);
+  margin-bottom: 10px;
+}
+
+.vibes-manager__label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vibes-manager__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ================= PRESSURE TABLE (Заявка) ================= */
+
+main .pressure-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid #6b6b6b;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 20px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+main .pressure-table thead {
+  background: #fafafa;
+}
+
+main .pressure-table th {
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #6b6b6b;
+  text-transform: uppercase;
+}
+
+main .pressure-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+main .pressure-table tr:last-child td {
+  border-bottom: none;
+}
+
+main .pressure-table tr:hover {
+  background: #f9f9f9;
+}
+
+main .pressure-table .tire-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+main .pressure-table .tire-cell img {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: block;
+  flex-shrink: 0;
+}
+
+main .pressure-table .pressure-value {
+  color: #ea5fac;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+main .pressure-table .coeff {
+  color: #999;
+  font-size: 13px;
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .header-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .search-box form {
+    width: 100%;
+  }
+
+  .search-box input {
+    max-width: none;
+    width: 100%;
+  }
+
+  .cart-btn {
+    align-self: center;
+  }
+
+  .tires-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tire-card {
+    flex-direction: column;
+  }
+
+  .tire-left {
+    width: 100%;
+    height: 200px;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-row .form-group {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn-submit,
+  .btn-delete,
+  .btn-back {
+    width: 100%;
+  }
+
+  .pressure-table {
+    font-size: 12px;
+  }
+
+  .pressure-table th,
+  .pressure-table td {
+    padding: 8px 10px;
+  }
+
+  .pressure-table .tire-cell img {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .cart-badge {
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .cart-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .vibes-viewport {
+    max-width: 100%;
+  }
 }

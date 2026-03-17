@@ -52,21 +52,29 @@ func (r *Repository) GetDraftTirePressure(creatorID uint) (*ds.TirePressure, err
 	}
 	return &t, nil
 }
-
 func (r *Repository) GetTirePressureWithEntries(tirePressureID uint) (*ds.TirePressure, []TirePressureEntryView, error) {
 	var t ds.TirePressure
 	err := r.db.First(&t, tirePressureID).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	if t.Status == ds.StatusDeleted {
-		return nil, nil, nil
-	}
+
 	var items []ds.TirePressureEntry
-	err = r.db.Where("tire_pressure_id = ?", tirePressureID).Preload("Tire").Order("id").Find(&items).Error
+	err = r.db.Where("tire_pressure_id = ?", tirePressureID).
+		Preload("Tire").
+		Order("id").
+		Find(&items).Error
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// ✅ ОТЛАДКА: выводим в консоль
+	logrus.Infof("GetTirePressureWithEntries: Found %d items", len(items))
+	for i, item := range items {
+		logrus.Infof("  Item %d: TireID=%d, TireTitle=%s, Photo=%s",
+			i, item.TireID, item.Tire.TireTitle, item.Tire.Photo)
+	}
+
 	var views []TirePressureEntryView
 	for _, item := range items {
 		views = append(views, TirePressureEntryView{
@@ -228,9 +236,12 @@ func (r *Repository) GetTirePressureByID(id int) (ds.TirePressure, error) {
 		}
 		return ds.TirePressure{}, err
 	}
+
+	// ✅ Если удалена — возвращаем ошибку (как будто не существует)
 	if t.Status == ds.StatusDeleted {
 		return ds.TirePressure{}, fmt.Errorf("%w: заявка удалена", ErrNotFound)
 	}
+
 	return t, nil
 }
 
@@ -507,4 +518,11 @@ func (r *Repository) UpdateTireInCartAPI(tireID, tirePressureID int, j serialize
 	// Re-fetch
 	r.db.Where("tire_id = ? AND tire_pressure_id = ?", tireID, tirePressureID).First(&item)
 	return item, nil
+}
+
+// GetTirePressureEntryByID получает запись м-м по ID
+func (r *Repository) GetTirePressureEntryByID(id uint) (ds.TirePressureEntry, error) {
+	var item ds.TirePressureEntry
+	err := r.db.First(&item, id).Error
+	return item, err
 }
