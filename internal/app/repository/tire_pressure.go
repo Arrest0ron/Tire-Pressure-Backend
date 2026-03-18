@@ -335,7 +335,7 @@ func (r *Repository) UpdateTirePressureFields(id int, j serializer.TirePressureU
 	return r.GetTirePressureByID(id)
 }
 
-// FormTirePressureAPI sets status to "сформирован", calculates and stores pressures.
+// ✅ FormTirePressureAPI рассчитывает давление и меняет статус на "сформирован"
 func (r *Repository) FormTirePressureAPI(id int) (ds.TirePressure, error) {
 	t, err := r.GetTirePressureByID(id)
 	if err != nil {
@@ -350,15 +350,43 @@ func (r *Repository) FormTirePressureAPI(id int) (ds.TirePressure, error) {
 		return ds.TirePressure{}, fmt.Errorf("%w: только создатель может сформировать заявку", ErrNotAllowed)
 	}
 
-	// Mandatory fields check: application must have at least one tire
+	// ✅ Проверка: хотя бы одна шина
 	var count int64
 	r.db.Model(&ds.TirePressureEntry{}).Where("tire_pressure_id = ?", t.TirePressureID).Count(&count)
 	if count == 0 {
 		return ds.TirePressure{}, fmt.Errorf("нельзя сформировать пустую заявку: добавьте хотя бы одну шину")
 	}
 
-	now := time.Now()
+	// ✅ РАССЧИТЫВАЕМ ДАВЛЕНИЕ ДЛЯ КАЖДОЙ ШИНЫ
+	var entries []ds.TirePressureEntry
+	if err := r.db.Where("tire_pressure_id = ?", t.TirePressureID).Find(&entries).Error; err != nil {
+		return ds.TirePressure{}, err
+	}
 
+	for _, entry := range entries {
+		var tire ds.Tire
+		if err := r.db.First(&tire, entry.TireID).Error; err != nil {
+			continue
+		}
+
+		// ✅ Формула расчёта
+		basePressure := 200.0
+		tempCorrection := (t.AirTemperature - 20.0) * 2.0
+		weightCorrection := (t.CarWeight - 1500.0) * 0.1
+
+		pressure := (basePressure + tempCorrection + weightCorrection) *
+			tire.TireMaterialCoefficient *
+			tire.TireThicknessCoefficient *
+			entry.CoatingCoefficient
+
+		// ✅ СОХРАНЯЕМ ДАВЛЕНИЕ В БД
+		if err := r.db.Model(&entry).Update("pressure", pressure).Error; err != nil {
+			return ds.TirePressure{}, err
+		}
+	}
+
+	// ✅ Меняем статус
+	now := time.Now()
 	updates := map[string]interface{}{
 		"status":      ds.StatusFormed,
 		"date_formed": now,
@@ -368,7 +396,6 @@ func (r *Repository) FormTirePressureAPI(id int) (ds.TirePressure, error) {
 		return ds.TirePressure{}, err
 	}
 
-	// Re-fetch to get updated values
 	return r.GetTirePressureByID(id)
 }
 

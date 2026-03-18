@@ -1,7 +1,11 @@
 package serializer
 
-// TirePressureEntryUpdateJSON — editable fields in a tire-pressure-tire link.
+type CoatingCoefficientUpdateJSON struct {
+	CoatingCoefficient float64 `json:"coating_coefficient"`
+}
+
 type TirePressureEntryUpdateJSON struct {
 	CoatingCoefficient float64 `json:"coating_coefficient"`
 	Pressure           float64 `json:"pressure"`
+	Direction          string  `json:"direction,omitempty"`
 }

@@ -8,27 +8,26 @@
 </head>
 <body>
 
-<!-- ✅ HEADER -->
 <header class="header">
   <div class="header-inner">
     <div class="logo">
-      <a href="/">
-        <img src="/static/img/YURDIS_logo.svg" alt="logo" style="height: 40px;" />
+      <!-- ✅ ИЗМЕНЕНО: / → /tires -->
+      <a href="/tires">
+        <img src="/static/img/YURDIS_logo.svg" alt="logo" style="height: 80px;" />
       </a>
     </div>
   </div>
 </header>
 
-<!-- ✅ MAIN CONTENT -->
 <main class="main-content">
 
-  <!-- ✅ SEARCH + CART -->
   <div class="header-controls">
     <div class="search-box">
-      <form action="/" method="GET">
+      <!-- ✅ ИЗМЕНЕНО: action="/" → action="/tires" -->
+      <form action="/tires" method="GET">
         <input type="text" name="query" placeholder="Найти шину" value="{{ .query }}" />
         <button type="submit">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
@@ -36,20 +35,14 @@
       </form>
     </div>
 
-    <!-- ✅ CART BADGE (ваша оригинальная иконка) -->
-    <div class="cart-badge {{ if eq .cartCount 0 }}cart-inactive{{ end }}">
-      {{ if ne .cartCount 0 }}
-      <a href="/tire-pressure/{{ .tirePressureID }}">
-        {{ end }}
+    <div class="cart-badge {{ if eq .cartCount 0 }}cart-inactive{{ end }}" id="cart-badge">
+      <a href="{{ if ne .cartCount 0 }}/tire-pressure/{{ .tirePressureID }}{{ else }}#{{ end }}">
         <img src="/static/img/cart_icon.png" class="cart-icon" alt="корзина" />
-        <span class="cart-count">{{ .cartCount }}</span>
-        {{ if ne .cartCount 0 }}
+        <span class="cart-count" id="cart-count">{{ .cartCount }}</span>
       </a>
-      {{ end }}
     </div>
   </div>
 
-  <!-- ✅ TIRES GRID -->
   <h2 class="section-title">Типы шин</h2>
   <div class="tires-grid">
     {{ range .tires }}
@@ -66,19 +59,43 @@
         <h3 class="tire-title">
           <a href="/tire/{{ .TireID }}">{{ .TireTitle }}</a>
         </h3>
-        <span class="device-size">
-          М: {{ .TireMaterialCoefficient }} | Т: {{ .TireThicknessCoefficient }}
-        </span>
+        <span class="device-size">М: {{ .TireMaterialCoefficient }} | Т: {{ .TireThicknessCoefficient }}</span>
         <p style="font-size:13px;color:#666;">{{ .Description }}</p>
-        <form action="/add-to-tire-pressure" method="POST" style="margin-top:10px;">
-          <input type="hidden" name="tire_id" value="{{ .TireID }}">
-          <button type="submit" class="tire-btn">+ В расчёт</button>
-        </form>
+        <button type="button" class="tire-btn" onclick="addToCart({{ .TireID }})">+ В расчёт</button>
       </div>
     </div>
     {{ end }}
   </div>
 
 </main>
+
+<script>
+  async function addToCart(tireId) {
+    try {
+      const r = await fetch(`/api/tire-pressure-entries/add/${tireId}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (r.ok) {
+        const cartR = await fetch('/api/tire-pressures/cart');
+        const cartData = await cartR.json();
+
+        const cartBadge = document.getElementById('cart-badge');
+        const cartCount = document.getElementById('cart-count');
+        const cartLink = cartBadge.querySelector('a');
+
+        if (cartData.tires_count > 0) {
+          cartCount.textContent = cartData.tires_count;
+          cartLink.href = `/tire-pressure/${cartData.tire_pressure_id}`;
+          cartBadge.classList.remove('cart-inactive');
+        }
+      }
+    } catch (e) {
+      console.error('Ошибка сети:', e);
+    }
+  }
+</script>
+
 </body>
 </html>

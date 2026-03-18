@@ -13,6 +13,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// ─── HTML Pages (2 страницы: главная + шина) ────────────────────────────────
+// ... остальной код
+
 func (r *Repository) GetAllTires() ([]ds.Tire, error) {
 	var tires []ds.Tire
 	err := r.db.Where("is_delete = false").Find(&tires).Error
