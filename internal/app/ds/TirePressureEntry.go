@@ -5,7 +5,6 @@ type TirePressureEntry struct {
 	TirePressureID uint         `gorm:"not null"`
 	TirePressure   TirePressure `gorm:"foreignKey:TirePressureID"`
 	TireID         uint         `gorm:"not null"`
-	// ✅ ДОБАВЬТЕ references:TireID - это критично!
 	Tire               Tire `gorm:"foreignKey:TireID;references:TireID"`
 	CoatingCoefficient float64
 	Pressure           float64

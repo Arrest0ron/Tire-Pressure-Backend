@@ -10,7 +10,7 @@ import (
 )
 
 // ✅ Константа доступна всем файлам пакета handler
-const minioBaseURL = "http://localhost:9090/tires"
+const minioBaseURL = "http://localhost:9090/tire-bucket"
 
 type Handler struct {
 	Repository *repository.Repository

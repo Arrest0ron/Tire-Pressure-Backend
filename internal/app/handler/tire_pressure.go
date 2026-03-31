@@ -20,32 +20,31 @@ func (h *Handler) TirePressurePage(ctx *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		// ✅ Некорректный ID → редирект на главную
-		ctx.Redirect(http.StatusFound, "/")
+		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
 	t, err := h.Repository.GetTirePressureByID(id)
 	if err != nil {
 		// ✅ Заявка не найдена → редирект на главную
-		ctx.Redirect(http.StatusFound, "/")
+		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
 	if t.Status == ds.StatusDeleted {
 		// ✅ Удалена → редирект на главную
-		ctx.Redirect(http.StatusFound, "/")
+		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
-	// ✅ Проверка доступа (только создатель для черновика)
 	if t.Status == ds.StatusDraft && int(t.CreatorID) != repository.GetUserID() {
-		ctx.Redirect(http.StatusFound, "/")
+		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
 	items, err := h.Repository.GetTirePressureEntriesAPI(t.TirePressureID)
 	if err != nil {
-		ctx.Redirect(http.StatusFound, "/")
+		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 

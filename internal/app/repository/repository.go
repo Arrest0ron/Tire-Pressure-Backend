@@ -16,7 +16,7 @@ var (
 	ErrNoDraft       = errors.New("no draft for this user")
 )
 
-// ─── SINGLETON: пользователь (для лаб 1-3, до авторизации) ─────────────────
+// ─────────────────
 
 var currentUserID int = 1
 
@@ -29,7 +29,7 @@ func SetUserID(id int) {
 }
 
 func SignOut() {
-	currentUserID = 0
+	currentUserID = 1
 }
 
 // ─── Repository ─────────────────────────────────────────────────────────────
@@ -55,3 +55,4 @@ func New(dsn string) (*Repository, error) {
 		mc: mc,
 	}, nil
 }
+

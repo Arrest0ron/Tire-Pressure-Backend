@@ -28,7 +28,7 @@ func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 			h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("tire_id is required"))
 			return
 		}
-		ctx.Redirect(http.StatusSeeOther, "/")
+		ctx.Redirect(http.StatusSeeOther, "/tires")
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 			h.errorHandler(ctx, http.StatusBadRequest, err)
 			return
 		}
-		ctx.Redirect(http.StatusSeeOther, "/")
+		ctx.Redirect(http.StatusSeeOther, "/tires")
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 			}
 			return
 		}
-		ctx.Redirect(http.StatusSeeOther, "/")
+		ctx.Redirect(http.StatusSeeOther, "/tires")
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *Handler) AddToTirePressure(ctx *gin.Context) {
 
 	redirectTo := ctx.GetHeader("Referer")
 	if redirectTo == "" {
-		redirectTo = "/"
+		redirectTo = "/tires"
 	}
 	ctx.Redirect(http.StatusSeeOther, redirectTo)
 }

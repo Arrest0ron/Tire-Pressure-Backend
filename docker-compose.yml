@@ -2,7 +2,7 @@ x-minio-common: &minio-common
   image: quay.io/minio/minio:RELEASE.2022-10-15T19-57-03Z
   command: server --console-address ":9001" http://minio{1...4}/data{1...2}
   environment:
-    MINIO_ACCESS_KEY: lexa
+    MINIO_ACCESS_KEY: tire
     MINIO_SECRET_KEY: qwerty123
   expose:
     - "9000"
@@ -19,7 +19,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: qwerty123
-      POSTGRES_DB: dendro_db
+      POSTGRES_DB: tire_db
     ports:
       - "5432:5432"
     volumes:

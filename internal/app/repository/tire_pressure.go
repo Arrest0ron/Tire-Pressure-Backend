@@ -237,7 +237,6 @@ func (r *Repository) GetTirePressureByID(id int) (ds.TirePressure, error) {
 		return ds.TirePressure{}, err
 	}
 
-	// ✅ Если удалена — возвращаем ошибку (как будто не существует)
 	if t.Status == ds.StatusDeleted {
 		return ds.TirePressure{}, fmt.Errorf("%w: заявка удалена", ErrNotFound)
 	}
@@ -245,7 +244,6 @@ func (r *Repository) GetTirePressureByID(id int) (ds.TirePressure, error) {
 	return t, nil
 }
 
-// GetAllTirePressures возвращает заявки кроме удалённых и черновика, с фильтром по диапазону даты формирования и статусу.
 func (r *Repository) GetAllTirePressures(from, to time.Time, status string) ([]ds.TirePressure, error) {
 	var list []ds.TirePressure
 	sub := r.db.Where("status != ? AND status != ?", ds.StatusDeleted, ds.StatusDraft)
