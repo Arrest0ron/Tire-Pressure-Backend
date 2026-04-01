@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"metoda/internal/app/auth"
 	"metoda/internal/app/ds"
 	"metoda/internal/app/serializer"
 )
@@ -77,7 +78,19 @@ func (r *Repository) SignIn(j serializer.UserJSON) (ds.Users, error) {
 		return ds.Users{}, fmt.Errorf("неверный логин или пароль")
 	}
 
-	// ✅ SINGLETON: замена r.SetUserID() → SetUserID()
-	SetUserID(int(u.ID))
+	r.SetUserID(int(u.ID))
 	return u, nil
+}
+
+// SignInWithToken проверяет логин/пароль и возвращает пользователя и JWT (лаб. 4).
+func (r *Repository) SignInWithToken(j serializer.UserJSON) (ds.Users, string, error) {
+	u, err := r.SignIn(j)
+	if err != nil {
+		return ds.Users{}, "", err
+	}
+	tok, err := auth.GenerateToken(u.ID, u.IsModerator)
+	if err != nil {
+		return ds.Users{}, "", err
+	}
+	return u, tok, nil
 }

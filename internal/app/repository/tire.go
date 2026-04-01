@@ -27,7 +27,7 @@ func (r *Repository) GetTireByID(id int) (*ds.Tire, error) {
 	err := r.db.Where("tire_id = ? AND is_delete = false", id).First(&tire).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%w: шина с id %d", ErrNotFound, id)
+			return nil, fmt.Errorf("%w: шина с tire_id %d", ErrNotFound, id)
 		}
 		return nil, err
 	}
@@ -43,7 +43,17 @@ func (r *Repository) SearchTiresByTitle(title string) ([]ds.Tire, error) {
 	return tires, nil
 }
 
-func (r *Repository) CreateTire(j serializer.TireJSON) (ds.Tire, error) {
+// CreateTire — только для модератора
+func (r *Repository) CreateTire(j serializer.TireJSON, currentUserID int) (ds.Tire, error) {
+	// ✅ Проверка: только модератор может создавать шины
+	moderator, err := r.GetUserByID(currentUserID)
+	if err != nil {
+		return ds.Tire{}, err
+	}
+	if !moderator.IsModerator {
+		return ds.Tire{}, fmt.Errorf("%w: только модератор может создавать шины", ErrNotAllowed)
+	}
+
 	if j.TireTitle == "" {
 		return ds.Tire{}, fmt.Errorf("поле tire_title обязательно")
 	}

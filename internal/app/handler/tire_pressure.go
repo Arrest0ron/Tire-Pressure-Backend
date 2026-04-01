@@ -13,31 +13,42 @@ import (
 	"metoda/internal/app/serializer"
 )
 
-// ─── HTML Pages (1 страница: заявка) ────────────────────────────────────────
-// ✅ GET /tire-pressure/:id — Страница заявки (HTML)
+// ─── HTML Pages ────────────────────────────────────────────────────────────
+
+// TirePressurePage Страница заявки (HTML)
+// @Summary Страница заявки на проверку давления
+// @Tags tire-pressure-html
+// @Produce html
+// @Param id path int true "ID заявки"
+// @Success 200 {string} string "HTML-страница заявки"
+// @Failure 302 "Редирект при ошибке или отсутствии доступа"
+// @Router /tire-pressure/{id} [get]
 func (h *Handler) TirePressurePage(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		// ✅ Некорректный ID → редирект на главную
 		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
 	t, err := h.Repository.GetTirePressureByID(id)
 	if err != nil {
-		// ✅ Заявка не найдена → редирект на главную
 		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
 	if t.Status == ds.StatusDeleted {
-		// ✅ Удалена → редирект на главную
 		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
 
-	if t.Status == ds.StatusDraft && int(t.CreatorID) != repository.GetUserID() {
+	// Проверка прав: черновик видит только создатель
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		ctx.Redirect(http.StatusFound, "/tires")
+		return
+	}
+	if t.Status == ds.StatusDraft && t.CreatorID != uint(uid) {
 		ctx.Redirect(http.StatusFound, "/tires")
 		return
 	}
@@ -51,7 +62,7 @@ func (h *Handler) TirePressurePage(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "tirepressurepage.html", gin.H{
 		"tire_pressure_id": t.TirePressureID,
 		"tires":            items,
-		"minioBase":        minioBaseURL,
+		"minioBase":        h.getMinioURL(),
 		"air_temperature":  t.AirTemperature,
 		"car_weight":       t.CarWeight,
 		"date_created":     t.DateCreate.Format("02.01.2006 15:04"),
@@ -59,18 +70,34 @@ func (h *Handler) TirePressurePage(ctx *gin.Context) {
 	})
 }
 
-// ─── API: Tire Pressures (7 методов) ────────────────────────────────────────
+// ─── API: Tire Pressures ───────────────────────────────────────────────────
 
-// ✅ GET /api/tire-pressures/cart
+// GetTirePressureCart Корзина (черновик заявки)
+// @Summary Корзина (черновик заявки)
+// @Description Если черновика нет — возвращает статус "no_draft".
+// @Tags tire-pressures
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} serializer.CartJSON "CartJSON (tire_pressure_id, tires_count) или no_draft"
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures/cart [get]
 func (h *Handler) GetTirePressureCart(ctx *gin.Context) {
-	creatorID := uint(repository.GetUserID())
-	id, count, err := h.Repository.GetCartInfo(creatorID)
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+	id, count, err := h.Repository.GetCartInfo(uid)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
 	if id == 0 {
-		ctx.JSON(http.StatusOK, gin.H{"status": "no_draft", "tires_count": 0})
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":      "no_draft",
+			"tires_count": 0,
+		})
 		return
 	}
 	ctx.JSON(http.StatusOK, serializer.CartJSON{
@@ -79,13 +106,26 @@ func (h *Handler) GetTirePressureCart(ctx *gin.Context) {
 	})
 }
 
-// ✅ GET /api/tire-pressures?from_date=YYYY-MM-DD&to_date=YYYY-MM-DD&status=...
+// GetTirePressures Список заявок
+// @Summary Список заявок на проверку давления
+// @Description Фильтры по дате и статусу. Пользователь видит свои; модератор — все.
+// @Tags tire-pressures
+// @Produce json
+// @Param from_date query string false "Начало диапазона даты (YYYY-MM-DD)"
+// @Param to_date query string false "Конец диапазона даты (YYYY-MM-DD)"
+// @Param status query string false "Фильтр по статусу"
+// @Security ApiKeyAuth
+// @Success 200 {array} serializer.TirePressureListJSON
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures [get]
 func (h *Handler) GetTirePressures(ctx *gin.Context) {
 	var from, to time.Time
 	if s := ctx.Query("from_date"); s != "" {
 		t, err := time.Parse("2006-01-02", s)
 		if err != nil {
-			h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("неверный формат from_date"))
+			h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("неверный формат from_date, ожидается YYYY-MM-DD"))
 			return
 		}
 		from = t
@@ -93,14 +133,21 @@ func (h *Handler) GetTirePressures(ctx *gin.Context) {
 	if s := ctx.Query("to_date"); s != "" {
 		t, err := time.Parse("2006-01-02", s)
 		if err != nil {
-			h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("неверный формат to_date"))
+			h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("неверный формат to_date, ожидается YYYY-MM-DD"))
 			return
 		}
 		to = t
 	}
 	status := ctx.Query("status")
 
-	list, err := h.Repository.GetAllTirePressures(from, to, status)
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+
+	// Передаем isModerator в репозиторий для фильтрации
+	list, err := h.Repository.GetAllTirePressures(from, to, status, uid, isModeratorFromCtx(ctx))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
@@ -116,7 +163,20 @@ func (h *Handler) GetTirePressures(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// ✅ GET /api/tire-pressures/:id
+// GetTirePressure Детальная заявка
+// @Summary Заявка по ID
+// @Description Состав шин и логины; доступ: создатель или модератор.
+// @Tags tire-pressures
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Security ApiKeyAuth
+// @Success 200 {object} serializer.TirePressureDetailJSON
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures/{id} [get]
 func (h *Handler) GetTirePressure(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -131,6 +191,17 @@ func (h *Handler) GetTirePressure(ctx *gin.Context) {
 		} else {
 			h.errorHandler(ctx, http.StatusInternalServerError, err)
 		}
+		return
+	}
+
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+	// Проверка прав доступа
+	if t.CreatorID != uint(uid) && !isModeratorFromCtx(ctx) {
+		h.errorHandler(ctx, http.StatusForbidden, fmt.Errorf("%w: нет доступа к чужой заявке", repository.ErrNotAllowed))
 		return
 	}
 
@@ -169,7 +240,21 @@ func (h *Handler) GetTirePressure(ctx *gin.Context) {
 	})
 }
 
-// ✅ PUT /api/tire-pressures/:id (температура, вес)
+// UpdateTirePressure Обновление полей заявки
+// @Summary Обновить заявку (температура, вес)
+// @Tags tire-pressures
+// @Accept json
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Param body body serializer.TirePressureUpdateJSON true "Поля для обновления"
+// @Security ApiKeyAuth
+// @Success 200 {object} serializer.TirePressureListJSON
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures/{id} [put]
 func (h *Handler) UpdateTirePressure(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -183,7 +268,12 @@ func (h *Handler) UpdateTirePressure(ctx *gin.Context) {
 		return
 	}
 
-	t, err := h.Repository.UpdateTirePressureFields(id, j)
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+	t, err := h.Repository.UpdateTirePressureFields(id, j, int(uid))
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			h.errorHandler(ctx, http.StatusNotFound, err)
@@ -201,7 +291,19 @@ func (h *Handler) UpdateTirePressure(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, serializer.TirePressureToListJSON(t, creatorLogin, moderatorLogin, entriesCount))
 }
 
-// ✅ PUT /api/tire-pressures/:id/form
+// FormTirePressure Оформить заявку (из черновика)
+// @Summary Оформить заявку
+// @Tags tire-pressures
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Security ApiKeyAuth
+// @Success 200 {object} serializer.TirePressureListJSON
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures/{id}/form [put]
 func (h *Handler) FormTirePressure(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -209,7 +311,12 @@ func (h *Handler) FormTirePressure(ctx *gin.Context) {
 		return
 	}
 
-	t, err := h.Repository.FormTirePressureAPI(id)
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+	t, err := h.Repository.FormTirePressureAPI(id, int(uid))
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			h.errorHandler(ctx, http.StatusNotFound, err)
@@ -227,7 +334,22 @@ func (h *Handler) FormTirePressure(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, serializer.TirePressureToListJSON(t, creatorLogin, moderatorLogin, entriesCount))
 }
 
-// ✅ PUT /api/tire-pressures/:id/finish
+// FinishTirePressure Завершить заявку (модератор)
+// @Summary Завершить заявку
+// @Description Установка итогового статуса; только для модератора.
+// @Tags tire-pressures
+// @Accept json
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Param body body serializer.FinishJSON true "Статус завершения"
+// @Security ApiKeyAuth
+// @Success 200 {object} serializer.TirePressureListJSON
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures/{id}/finish [put]
 func (h *Handler) FinishTirePressure(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -241,7 +363,12 @@ func (h *Handler) FinishTirePressure(ctx *gin.Context) {
 		return
 	}
 
-	t, err := h.Repository.FinishTirePressureAPI(id, j.Status)
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+	t, err := h.Repository.FinishTirePressureAPI(id, j.Status, int(uid))
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			h.errorHandler(ctx, http.StatusNotFound, err)
@@ -259,7 +386,19 @@ func (h *Handler) FinishTirePressure(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, serializer.TirePressureToListJSON(t, creatorLogin, moderatorLogin, entriesCount))
 }
 
-// ✅ DELETE /api/tire-pressures/:id
+// DeleteTirePressure Удалить заявку
+// @Summary Удалить заявку
+// @Tags tire-pressures
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Security ApiKeyAuth
+// @Success 200 {object} map[string]string "status: deleted"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/tire-pressures/{id} [delete]
 func (h *Handler) DeleteTirePressure(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -267,7 +406,12 @@ func (h *Handler) DeleteTirePressure(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Repository.DeleteTirePressureAPI(id); err != nil {
+	uid, err := authUserIDUint(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+	if err := h.Repository.DeleteTirePressureAPI(id, int(uid)); err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			h.errorHandler(ctx, http.StatusNotFound, err)
 		} else if errors.Is(err, repository.ErrNotAllowed) {

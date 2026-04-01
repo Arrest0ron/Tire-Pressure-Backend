@@ -32,7 +32,6 @@ func (r *Repository) GetModeratorLogin(moderatorID *uint) string {
 	return u.Login
 }
 
-// GetTireEntriesCount — число записей м-м, в которых рассчитываемое поле результата (давление) не пустое.
 func (r *Repository) GetTireEntriesCount(tirePressureID uint) int {
 	var count int64
 	r.db.Model(&ds.TirePressureEntry{}).
@@ -42,7 +41,7 @@ func (r *Repository) GetTireEntriesCount(tirePressureID uint) int {
 	return int(count)
 }
 
-// ─── HTML-layer methods (kept for lab2 compatibility) ───────────────────────
+// ─── HTML-layer methods ─────────────────────────────────────────────────────
 
 func (r *Repository) GetDraftTirePressure(creatorID uint) (*ds.TirePressure, error) {
 	var t ds.TirePressure
@@ -52,29 +51,18 @@ func (r *Repository) GetDraftTirePressure(creatorID uint) (*ds.TirePressure, err
 	}
 	return &t, nil
 }
+
 func (r *Repository) GetTirePressureWithEntries(tirePressureID uint) (*ds.TirePressure, []TirePressureEntryView, error) {
 	var t ds.TirePressure
 	err := r.db.First(&t, tirePressureID).Error
 	if err != nil {
 		return nil, nil, err
 	}
-
 	var items []ds.TirePressureEntry
-	err = r.db.Where("tire_pressure_id = ?", tirePressureID).
-		Preload("Tire").
-		Order("id").
-		Find(&items).Error
+	err = r.db.Where("tire_pressure_id = ?", tirePressureID).Preload("Tire").Order("id").Find(&items).Error
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// ✅ ОТЛАДКА: выводим в консоль
-	logrus.Infof("GetTirePressureWithEntries: Found %d items", len(items))
-	for i, item := range items {
-		logrus.Infof("  Item %d: TireID=%d, TireTitle=%s, Photo=%s",
-			i, item.TireID, item.Tire.TireTitle, item.Tire.Photo)
-	}
-
 	var views []TirePressureEntryView
 	for _, item := range items {
 		views = append(views, TirePressureEntryView{
@@ -103,10 +91,8 @@ type TirePressureEntryView struct {
 func (r *Repository) GetCalculatedPressures(tirePressureID uint) []float64 {
 	var pressures []float64
 	err := r.db.Raw(`
-		SELECT pressure
-		FROM tire_pressure_entries
-		WHERE tire_pressure_id = ?
-		  AND pressure IS NOT NULL AND pressure > 0
+		SELECT pressure FROM tire_pressure_entries
+		WHERE tire_pressure_id = ? AND pressure IS NOT NULL AND pressure > 0
 	`, tirePressureID).Scan(&pressures).Error
 	if err != nil {
 		logrus.Errorf("GetCalculatedPressures: %v", err)
@@ -139,66 +125,47 @@ func (r *Repository) DeleteTirePressureBySQL(tirePressureID uint) error {
 	return r.db.Exec("UPDATE tire_pressures SET status = '"+ds.StatusDeleted+"' WHERE tire_pressure_id = ?", tirePressureID).Error
 }
 
-// UpdateTirePressureItem обновляет коэффициент типа покрытия
-// для одной строки связи заявки с шиной (HTML-форма на странице корзины).
 func (r *Repository) UpdateTirePressureItem(itemID uint, coatingCoefficient float64) error {
 	var item ds.TirePressureEntry
 	if err := r.db.First(&item, itemID).Error; err != nil {
 		return err
 	}
-
 	if coatingCoefficient <= 0 {
 		coatingCoefficient = 1.0
 	}
-
-	updates := map[string]interface{}{
+	return r.db.Model(&item).Updates(map[string]interface{}{
 		"coating_coefficient": coatingCoefficient,
-	}
-
-	return r.db.Model(&item).Updates(updates).Error
+	}).Error
 }
 
-// FormTirePressure рассчитывает давление и меняет статус на "сформирован"
 func (r *Repository) FormTirePressure(tirePressureID uint) error {
-	// ✅ Сначала рассчитываем давление для всех шин
 	var entries []ds.TirePressureEntry
 	if err := r.db.Where("tire_pressure_id = ?", tirePressureID).Find(&entries).Error; err != nil {
 		return err
 	}
-
 	var tp ds.TirePressure
 	if err := r.db.First(&tp, tirePressureID).Error; err != nil {
 		return err
 	}
-
 	for _, entry := range entries {
 		var tire ds.Tire
 		if err := r.db.First(&tire, entry.TireID).Error; err != nil {
 			continue
 		}
-
-		// Формула расчёта
 		basePressure := 200.0
 		tempCorrection := (tp.AirTemperature - 20.0) * 2.0
 		weightCorrection := (tp.CarWeight - 1500.0) * 0.1
-
 		pressure := (basePressure + tempCorrection + weightCorrection) *
 			tire.TireMaterialCoefficient *
 			tire.TireThicknessCoefficient *
 			entry.CoatingCoefficient
-
-		r.db.Model(&entry).Updates(map[string]interface{}{
-			"pressure": pressure,
-		})
+		r.db.Model(&entry).Updates(map[string]interface{}{"pressure": pressure})
 	}
-
-	// ✅ Затем меняем статус
 	now := time.Now()
-	updates := map[string]interface{}{
+	return r.db.Model(&ds.TirePressure{}).Where("tire_pressure_id = ?", tirePressureID).Updates(map[string]interface{}{
 		"status":      ds.StatusFormed,
 		"date_formed": now,
-	}
-	return r.db.Model(&ds.TirePressure{}).Where("tire_pressure_id = ?", tirePressureID).Updates(updates).Error
+	}).Error
 }
 
 func (r *Repository) GetCartCount(creatorID uint) int64 {
@@ -224,9 +191,8 @@ func (r *Repository) GetDraftTirePressureID(creatorID uint) uint {
 	return tirePressureID
 }
 
-// ─── API methods ─────────────────────────────────────────────────────────────
+// ─── API methods (с проверками прав) ────────────────────────────────────────
 
-// GetTirePressureByID returns a non-deleted tire-pressure by ID.
 func (r *Repository) GetTirePressureByID(id int) (ds.TirePressure, error) {
 	var t ds.TirePressure
 	err := r.db.Where("tire_pressure_id = ?", id).First(&t).Error
@@ -236,17 +202,19 @@ func (r *Repository) GetTirePressureByID(id int) (ds.TirePressure, error) {
 		}
 		return ds.TirePressure{}, err
 	}
-
 	if t.Status == ds.StatusDeleted {
 		return ds.TirePressure{}, fmt.Errorf("%w: заявка удалена", ErrNotFound)
 	}
-
 	return t, nil
 }
 
-func (r *Repository) GetAllTirePressures(from, to time.Time, status string) ([]ds.TirePressure, error) {
+// GetAllTirePressures — с фильтром по правам доступа
+func (r *Repository) GetAllTirePressures(from, to time.Time, status string, viewerID uint, isModerator bool) ([]ds.TirePressure, error) {
 	var list []ds.TirePressure
 	sub := r.db.Where("status != ? AND status != ?", ds.StatusDeleted, ds.StatusDraft)
+	if !isModerator {
+		sub = sub.Where("creator_id = ?", viewerID)
+	}
 	if !from.IsZero() {
 		sub = sub.Where("date_formed >= ?", from)
 	}
@@ -263,7 +231,6 @@ func (r *Repository) GetAllTirePressures(from, to time.Time, status string) ([]d
 	return list, nil
 }
 
-// GetTirePressureEntriesAPI returns the m-m records for a tire-pressure with tire data.
 func (r *Repository) GetTirePressureEntriesAPI(id uint) ([]serializer.TirePressureEntryViewJSON, error) {
 	var items []ds.TirePressureEntry
 	err := r.db.Where("tire_pressure_id = ?", id).Preload("Tire").Order("id").Find(&items).Error
@@ -286,7 +253,6 @@ func (r *Repository) GetTirePressureEntriesAPI(id uint) ([]serializer.TirePressu
 	return views, nil
 }
 
-// GetCartInfo returns the draft tire-pressure ID and tires count for the given user.
 func (r *Repository) GetCartInfo(creatorID uint) (uint, int64, error) {
 	var t ds.TirePressure
 	err := r.db.Where("creator_id = ? AND status = ?", creatorID, ds.StatusDraft).First(&t).Error
@@ -301,8 +267,8 @@ func (r *Repository) GetCartInfo(creatorID uint) (uint, int64, error) {
 	return t.TirePressureID, count, nil
 }
 
-// UpdateTirePressureFields обновляет редактируемые поля заявки (air_temperature, car_weight). Только для черновика и только создатель.
-func (r *Repository) UpdateTirePressureFields(id int, j serializer.TirePressureUpdateJSON) (ds.TirePressure, error) {
+// UpdateTirePressureFields — только создатель, только черновик
+func (r *Repository) UpdateTirePressureFields(id int, j serializer.TirePressureUpdateJSON, currentUserID int) (ds.TirePressure, error) {
 	t, err := r.GetTirePressureByID(id)
 	if err != nil {
 		return ds.TirePressure{}, err
@@ -310,11 +276,9 @@ func (r *Repository) UpdateTirePressureFields(id int, j serializer.TirePressureU
 	if t.Status != ds.StatusDraft {
 		return ds.TirePressure{}, fmt.Errorf("%w: можно менять только черновик", ErrNotAllowed)
 	}
-	// ✅ SINGLETON: замена r.userID → GetUserID()
-	if int(t.CreatorID) != GetUserID() {
+	if t.CreatorID != uint(currentUserID) {
 		return ds.TirePressure{}, fmt.Errorf("%w: только создатель может редактировать заявку", ErrNotAllowed)
 	}
-
 	updates := map[string]interface{}{}
 	if j.AirTemperature != 0 {
 		updates["air_temperature"] = j.AirTemperature
@@ -322,19 +286,16 @@ func (r *Repository) UpdateTirePressureFields(id int, j serializer.TirePressureU
 	if j.CarWeight != 0 {
 		updates["car_weight"] = j.CarWeight
 	}
-
 	if len(updates) > 0 {
 		if err := r.db.Model(&t).Updates(updates).Error; err != nil {
 			return ds.TirePressure{}, err
 		}
 	}
-
-	// Re-fetch to get updated values
 	return r.GetTirePressureByID(id)
 }
 
-// ✅ FormTirePressureAPI рассчитывает давление и меняет статус на "сформирован"
-func (r *Repository) FormTirePressureAPI(id int) (ds.TirePressure, error) {
+// FormTirePressureAPI — только создатель, только черновик
+func (r *Repository) FormTirePressureAPI(id int, currentUserID int) (ds.TirePressure, error) {
 	t, err := r.GetTirePressureByID(id)
 	if err != nil {
 		return ds.TirePressure{}, err
@@ -342,84 +303,64 @@ func (r *Repository) FormTirePressureAPI(id int) (ds.TirePressure, error) {
 	if t.Status != ds.StatusDraft {
 		return ds.TirePressure{}, fmt.Errorf("нельзя сформировать заявку со статусом %s", t.Status)
 	}
-
-	// ✅ SINGLETON: замена r.userID → GetUserID()
-	if int(t.CreatorID) != GetUserID() {
+	if t.CreatorID != uint(currentUserID) {
 		return ds.TirePressure{}, fmt.Errorf("%w: только создатель может сформировать заявку", ErrNotAllowed)
 	}
-
-	// ✅ Проверка: хотя бы одна шина
 	var count int64
 	r.db.Model(&ds.TirePressureEntry{}).Where("tire_pressure_id = ?", t.TirePressureID).Count(&count)
 	if count == 0 {
 		return ds.TirePressure{}, fmt.Errorf("нельзя сформировать пустую заявку: добавьте хотя бы одну шину")
 	}
-
-	// ✅ РАССЧИТЫВАЕМ ДАВЛЕНИЕ ДЛЯ КАЖДОЙ ШИНЫ
+	// Расчёт давления
 	var entries []ds.TirePressureEntry
 	if err := r.db.Where("tire_pressure_id = ?", t.TirePressureID).Find(&entries).Error; err != nil {
 		return ds.TirePressure{}, err
 	}
-
 	for _, entry := range entries {
 		var tire ds.Tire
 		if err := r.db.First(&tire, entry.TireID).Error; err != nil {
 			continue
 		}
-
-		// ✅ Формула расчёта
 		basePressure := 200.0
 		tempCorrection := (t.AirTemperature - 20.0) * 2.0
 		weightCorrection := (t.CarWeight - 1500.0) * 0.1
-
 		pressure := (basePressure + tempCorrection + weightCorrection) *
 			tire.TireMaterialCoefficient *
 			tire.TireThicknessCoefficient *
 			entry.CoatingCoefficient
-
-		// ✅ СОХРАНЯЕМ ДАВЛЕНИЕ В БД
 		if err := r.db.Model(&entry).Update("pressure", pressure).Error; err != nil {
 			return ds.TirePressure{}, err
 		}
 	}
-
-	// ✅ Меняем статус
 	now := time.Now()
-	updates := map[string]interface{}{
+	if err := r.db.Model(&t).Updates(map[string]interface{}{
 		"status":      ds.StatusFormed,
 		"date_formed": now,
-	}
-
-	if err := r.db.Model(&t).Updates(updates).Error; err != nil {
+	}).Error; err != nil {
 		return ds.TirePressure{}, err
 	}
-
 	return r.GetTirePressureByID(id)
 }
 
-// FinishTirePressureAPI lets a moderator set status to "завершён" or "отклонён".
-func (r *Repository) FinishTirePressureAPI(id int, status string) (ds.TirePressure, error) {
+// FinishTirePressureAPI — только модератор
+func (r *Repository) FinishTirePressureAPI(id int, status string, currentUserID int) (ds.TirePressure, error) {
 	if status != ds.StatusCompleted && status != ds.StatusRejected {
 		return ds.TirePressure{}, fmt.Errorf("недопустимый статус: ожидается '%s' или '%s'", ds.StatusCompleted, ds.StatusRejected)
 	}
-
-	// ✅ SINGLETON: замена r.userID → GetUserID()
-	moderator, err := r.GetUserByID(GetUserID())
+	moderator, err := r.GetUserByID(currentUserID)
 	if err != nil {
 		return ds.TirePressure{}, err
 	}
 	if !moderator.IsModerator {
 		return ds.TirePressure{}, fmt.Errorf("%w: только модератор может завершить или отклонить заявку", ErrNotAllowed)
 	}
-
 	t, err := r.GetTirePressureByID(id)
 	if err != nil {
 		return ds.TirePressure{}, err
 	}
 	if t.Status != ds.StatusFormed {
-		return ds.TirePressure{}, fmt.Errorf("завершить или отклонить можно только сформированную заявку; текущий статус — %s (сначала PUT .../form)", t.Status)
+		return ds.TirePressure{}, fmt.Errorf("завершить или отклонить можно только сформированную заявку; текущий статус — %s", t.Status)
 	}
-
 	now := time.Now()
 	moderatorID := uint(moderator.ID)
 	if err := r.db.Model(&t).Updates(map[string]interface{}{
@@ -429,12 +370,11 @@ func (r *Repository) FinishTirePressureAPI(id int, status string) (ds.TirePressu
 	}).Error; err != nil {
 		return ds.TirePressure{}, err
 	}
-
 	return r.GetTirePressureByID(id)
 }
 
-// DeleteTirePressureAPI soft-deletes a draft tire-pressure (creator only).
-func (r *Repository) DeleteTirePressureAPI(id int) error {
+// DeleteTirePressureAPI — только создатель, только черновик
+func (r *Repository) DeleteTirePressureAPI(id int, currentUserID int) error {
 	t, err := r.GetTirePressureByID(id)
 	if err != nil {
 		return err
@@ -442,25 +382,21 @@ func (r *Repository) DeleteTirePressureAPI(id int) error {
 	if t.Status != ds.StatusDraft {
 		return fmt.Errorf("%w: только черновик может быть удалён создателем", ErrNotAllowed)
 	}
-	// ✅ SINGLETON: замена r.userID → GetUserID()
-	if int(t.CreatorID) != GetUserID() {
+	if t.CreatorID != uint(currentUserID) {
 		return fmt.Errorf("%w: только создатель может удалить заявку", ErrNotAllowed)
 	}
 	return r.db.Model(&t).Update("status", ds.StatusDeleted).Error
 }
 
-// AddTireToCartAPI adds a tire to the user's draft (creates draft if needed).
+// AddTireToCartAPI — создаёт черновик при необходимости
 func (r *Repository) AddTireToCartAPI(tireID uint, creatorID uint) (ds.TirePressure, bool, error) {
-	// Verify tire exists and is not deleted
-	var t ds.Tire
-	if err := r.db.Where("tire_id = ? AND is_delete = false", tireID).First(&t).Error; err != nil {
+	var tire ds.Tire
+	if err := r.db.Where("tire_id = ? AND is_delete = false", tireID).First(&tire).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ds.TirePressure{}, false, fmt.Errorf("%w: шина с id %d", ErrNotFound, tireID)
 		}
 		return ds.TirePressure{}, false, err
 	}
-
-	// Get or create draft
 	var tp ds.TirePressure
 	created := false
 	err := r.db.Where("creator_id = ? AND status = ?", creatorID, ds.StatusDraft).First(&tp).Error
@@ -477,14 +413,11 @@ func (r *Repository) AddTireToCartAPI(tireID uint, creatorID uint) (ds.TirePress
 	} else if err != nil {
 		return ds.TirePressure{}, false, err
 	}
-
-	// Check for duplicate
 	var existing ds.TirePressureEntry
 	res := r.db.Where("tire_pressure_id = ? AND tire_id = ?", tp.TirePressureID, tireID).First(&existing)
 	if res.Error == nil {
 		return ds.TirePressure{}, false, fmt.Errorf("%w: шина %d уже добавлена в заявку %d", ErrAlreadyExists, tireID, tp.TirePressureID)
 	}
-
 	tpe := ds.TirePressureEntry{
 		TirePressureID:     tp.TirePressureID,
 		TireID:             tireID,
@@ -496,11 +429,14 @@ func (r *Repository) AddTireToCartAPI(tireID uint, creatorID uint) (ds.TirePress
 	return tp, created, nil
 }
 
-// DeleteTireFromCartAPI removes a tire from a tire-pressure (must be draft).
-func (r *Repository) DeleteTireFromCartAPI(tireID, tirePressureID int) (ds.TirePressure, error) {
+// DeleteTireFromCartAPI — только создатель, только черновик
+func (r *Repository) DeleteTireFromCartAPI(tireID, tirePressureID int, currentUserID int) (ds.TirePressure, error) {
 	t, err := r.GetTirePressureByID(tirePressureID)
 	if err != nil {
 		return ds.TirePressure{}, err
+	}
+	if t.CreatorID != uint(currentUserID) {
+		return ds.TirePressure{}, fmt.Errorf("%w: только создатель может изменять заявку", ErrNotAllowed)
 	}
 	if t.Status != ds.StatusDraft {
 		return ds.TirePressure{}, fmt.Errorf("%w: нельзя изменить не черновик", ErrNotAllowed)
@@ -512,16 +448,18 @@ func (r *Repository) DeleteTireFromCartAPI(tireID, tirePressureID int) (ds.TireP
 	return t, nil
 }
 
-// UpdateTireInCartAPI edits coating_coefficient in m-m.
-func (r *Repository) UpdateTireInCartAPI(tireID, tirePressureID int, j serializer.TirePressureEntryUpdateJSON) (ds.TirePressureEntry, error) {
+// UpdateTireInCartAPI — только создатель, только черновик
+func (r *Repository) UpdateTireInCartAPI(tireID, tirePressureID int, j serializer.TirePressureEntryUpdateJSON, currentUserID int) (ds.TirePressureEntry, error) {
 	t, err := r.GetTirePressureByID(tirePressureID)
 	if err != nil {
 		return ds.TirePressureEntry{}, err
 	}
+	if t.CreatorID != uint(currentUserID) {
+		return ds.TirePressureEntry{}, fmt.Errorf("%w: только создатель может изменять заявку", ErrNotAllowed)
+	}
 	if t.Status != ds.StatusDraft {
 		return ds.TirePressureEntry{}, fmt.Errorf("%w: нельзя изменить не черновик", ErrNotAllowed)
 	}
-
 	var item ds.TirePressureEntry
 	err = r.db.Where("tire_id = ? AND tire_pressure_id = ?", tireID, tirePressureID).First(&item).Error
 	if err != nil {
@@ -530,22 +468,17 @@ func (r *Repository) UpdateTireInCartAPI(tireID, tirePressureID int, j serialize
 		}
 		return ds.TirePressureEntry{}, err
 	}
-
 	updates := map[string]interface{}{}
 	if j.CoatingCoefficient > 0 {
 		updates["coating_coefficient"] = j.CoatingCoefficient
 	}
-
 	if err := r.db.Model(&item).Updates(updates).Error; err != nil {
 		return ds.TirePressureEntry{}, err
 	}
-
-	// Re-fetch
 	r.db.Where("tire_id = ? AND tire_pressure_id = ?", tireID, tirePressureID).First(&item)
 	return item, nil
 }
 
-// GetTirePressureEntryByID получает запись м-м по ID
 func (r *Repository) GetTirePressureEntryByID(id uint) (ds.TirePressureEntry, error) {
 	var item ds.TirePressureEntry
 	err := r.db.First(&item, id).Error

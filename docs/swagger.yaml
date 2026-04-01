@@ -1,0 +1,942 @@
+basePath: /
+definitions:
+  serializer.CartJSON:
+    properties:
+      tire_pressure_id:
+        type: integer
+      tires_count:
+        type: integer
+    type: object
+  serializer.FinishJSON:
+    properties:
+      status:
+        type: string
+    type: object
+  serializer.TireJSON:
+    properties:
+      description:
+        type: string
+      is_delete:
+        type: boolean
+      photo:
+        type: string
+      tire_id:
+        type: integer
+      tire_material_coefficient:
+        type: number
+      tire_thickness_coefficient:
+        type: number
+      tire_title:
+        type: string
+      video:
+        type: string
+    type: object
+  serializer.TirePressureDetailJSON:
+    properties:
+      air_temperature:
+        type: number
+      car_weight:
+        type: number
+      creator_login:
+        type: string
+      date_completed:
+        type: string
+      date_create:
+        type: string
+      date_formed:
+        type: string
+      entries:
+        items:
+          $ref: '#/definitions/serializer.TirePressureEntryViewJSON'
+        type: array
+      moderator_login:
+        type: string
+      status:
+        type: string
+      tire_pressure_id:
+        type: integer
+    type: object
+  serializer.TirePressureEntryUpdateJSON:
+    properties:
+      coating_coefficient:
+        type: number
+      direction:
+        type: string
+      pressure:
+        type: number
+    type: object
+  serializer.TirePressureEntryViewJSON:
+    properties:
+      coating_coefficient:
+        type: number
+      id:
+        type: integer
+      photo:
+        type: string
+      pressure:
+        type: number
+      tire_id:
+        type: integer
+      tire_material_coefficient:
+        type: number
+      tire_thickness_coefficient:
+        type: number
+      tire_title:
+        type: string
+    type: object
+  serializer.TirePressureListJSON:
+    properties:
+      air_temperature:
+        type: number
+      car_weight:
+        type: number
+      creator_login:
+        type: string
+      date_completed:
+        type: string
+      date_create:
+        type: string
+      date_formed:
+        type: string
+      moderator_login:
+        type: string
+      status:
+        type: string
+      tire_entries_count:
+        type: integer
+      tire_pressure_id:
+        type: integer
+    type: object
+  serializer.TirePressureUpdateJSON:
+    properties:
+      air_temperature:
+        type: number
+      car_weight:
+        type: number
+    type: object
+  serializer.UserJSON:
+    properties:
+      id:
+        type: integer
+      is_moderator:
+        type: boolean
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для расчёта давления в шинах
+  title: Tire Pressure API
+  version: "1.0"
+paths:
+  /api/tire-pressure-entries/{tire_id}/{tire_pressure_id}:
+    delete:
+      parameters:
+      - description: ID шины
+        in: path
+        name: tire_id
+        required: true
+        type: integer
+      - description: ID заявки
+        in: path
+        name: tire_pressure_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённая заявка
+          schema:
+            $ref: '#/definitions/serializer.TirePressureListJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить шину из заявки
+      tags:
+      - tire-pressure-entries
+    put:
+      consumes:
+      - application/json
+      description: Коэффициент покрытия, давление и другие параметры для пары шина–заявка.
+      parameters:
+      - description: ID шины
+        in: path
+        name: tire_id
+        required: true
+        type: integer
+      - description: ID заявки
+        in: path
+        name: tire_pressure_id
+        required: true
+        type: integer
+      - description: Поля для обновления
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.TirePressureEntryUpdateJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.TirePressureEntryUpdateJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Обновить запись в заявке
+      tags:
+      - tire-pressure-entries
+  /api/tire-pressure-entries/add/{tire_id}:
+    post:
+      description: Добавляет шину в черновик заявки; при первом добавлении создаётся
+        заявка (201 + Location). Поддерживает JSON и form-data.
+      parameters:
+      - description: ID шины
+        in: path
+        name: tire_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешно добавлено
+          schema:
+            additionalProperties: true
+            type: object
+        "201":
+          description: Заявка создана
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Уже в заявке
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Добавить шину в заявку
+      tags:
+      - tire-pressure-entries
+  /api/tire-pressures:
+    get:
+      description: Фильтры по дате и статусу. Пользователь видит свои; модератор —
+        все.
+      parameters:
+      - description: Начало диапазона даты (YYYY-MM-DD)
+        in: query
+        name: from_date
+        type: string
+      - description: Конец диапазона даты (YYYY-MM-DD)
+        in: query
+        name: to_date
+        type: string
+      - description: Фильтр по статусу
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/serializer.TirePressureListJSON'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Список заявок на проверку давления
+      tags:
+      - tire-pressures
+  /api/tire-pressures/{id}:
+    delete:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: deleted'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить заявку
+      tags:
+      - tire-pressures
+    get:
+      description: 'Состав шин и логины; доступ: создатель или модератор.'
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.TirePressureDetailJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Заявка по ID
+      tags:
+      - tire-pressures
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Поля для обновления
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.TirePressureUpdateJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.TirePressureListJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Обновить заявку (температура, вес)
+      tags:
+      - tire-pressures
+  /api/tire-pressures/{id}/finish:
+    put:
+      consumes:
+      - application/json
+      description: Установка итогового статуса; только для модератора.
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Статус завершения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.FinishJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.TirePressureListJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Завершить заявку
+      tags:
+      - tire-pressures
+  /api/tire-pressures/{id}/form:
+    put:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.TirePressureListJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Оформить заявку
+      tags:
+      - tire-pressures
+  /api/tire-pressures/cart:
+    get:
+      description: Если черновика нет — возвращает статус "no_draft".
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: CartJSON (tire_pressure_id, tires_count) или no_draft
+          schema:
+            $ref: '#/definitions/serializer.CartJSON'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Корзина (черновик заявки)
+      tags:
+      - tire-pressures
+  /api/tires:
+    get:
+      parameters:
+      - description: Поиск по названию шины
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/serializer.TireJSON'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Список шин
+      tags:
+      - tires
+    post:
+      consumes:
+      - multipart/form-data
+      description: multipart/form-data или application/json; только для модераторов
+      parameters:
+      - description: Название шины
+        in: formData
+        name: tire_title
+        type: string
+      - description: Коэффициент материала
+        in: formData
+        name: tire_material_coefficient
+        type: number
+      - description: Коэффициент толщины
+        in: formData
+        name: tire_thickness_coefficient
+        type: number
+      - description: Описание
+        in: formData
+        name: description
+        type: string
+      - description: Фото шины
+        in: formData
+        name: photo
+        type: file
+      - description: Видео шины
+        in: formData
+        name: video
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/serializer.TireJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Требуется роль модератора
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Создать шину
+      tags:
+      - tires
+  /api/tires/{id}:
+    get:
+      parameters:
+      - description: ID шины
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.TireJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Шина по ID
+      tags:
+      - tires
+  /api/users/signin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Логин и пароль
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.UserJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: user + token
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неверный логин или пароль
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход
+      tags:
+      - auth
+  /api/users/signout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: signed_out'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Выход
+      tags:
+      - auth
+  /api/users/signup:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.UserJSON'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/serializer.UserJSON'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Пользователь уже существует
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация
+      tags:
+      - auth
+  /tire-pressure/{id}:
+    get:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML-страница заявки
+          schema:
+            type: string
+        "302":
+          description: Редирект при ошибке или отсутствии доступа
+      summary: Страница заявки на проверку давления
+      tags:
+      - tire-pressure-html
+  /tire/{id}:
+    get:
+      parameters:
+      - description: ID шины
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML-страница
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Страница шины по ID
+      tags:
+      - tires-html
+  /tires:
+    get:
+      parameters:
+      - description: Поиск по названию шины
+        in: query
+        name: query
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML-страница
+          schema:
+            type: string
+      summary: Главная страница (список шин)
+      tags:
+      - tires-html
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

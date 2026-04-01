@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	_ "metoda/docs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -11,6 +12,16 @@ import (
 	"metoda/internal/app/repository"
 	"metoda/internal/pkg"
 )
+
+// @title Tire Pressure API
+// @version 1.0
+// @description API для расчёта давления в шинах
+// @host localhost:8080
+// @BasePath /
+// @SecurityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+// @Security ApiKeyAuth
 
 func main() {
 	router := gin.Default()
