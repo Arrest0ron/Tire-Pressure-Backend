@@ -1,3 +1,4 @@
+// internal/app/repository/tire.go
 package repository
 
 import (
@@ -13,6 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// GetAllTires возвращает все активные шины
 func (r *Repository) GetAllTires() ([]ds.Tire, error) {
 	var tires []ds.Tire
 	err := r.db.Where("is_delete = false").Find(&tires).Error
@@ -22,6 +24,7 @@ func (r *Repository) GetAllTires() ([]ds.Tire, error) {
 	return tires, nil
 }
 
+// GetTireByID возвращает шину по ID
 func (r *Repository) GetTireByID(id int) (*ds.Tire, error) {
 	var tire ds.Tire
 	err := r.db.Where("tire_id = ? AND is_delete = false", id).First(&tire).Error
@@ -34,6 +37,7 @@ func (r *Repository) GetTireByID(id int) (*ds.Tire, error) {
 	return &tire, nil
 }
 
+// SearchTiresByTitle ищет шины по названию (регистронезависимо)
 func (r *Repository) SearchTiresByTitle(title string) ([]ds.Tire, error) {
 	var tires []ds.Tire
 	err := r.db.Where("tire_title ILIKE ? AND is_delete = ?", "%"+title+"%", false).Find(&tires).Error
@@ -43,9 +47,9 @@ func (r *Repository) SearchTiresByTitle(title string) ([]ds.Tire, error) {
 	return tires, nil
 }
 
-// CreateTire — только для модератора
+// CreateTire создаёт новую шину (только для модератора)
 func (r *Repository) CreateTire(j serializer.TireJSON, currentUserID int) (ds.Tire, error) {
-	// ✅ Проверка: только модератор может создавать шины
+	// Проверка прав модератора
 	moderator, err := r.GetUserByID(currentUserID)
 	if err != nil {
 		return ds.Tire{}, err
@@ -54,6 +58,7 @@ func (r *Repository) CreateTire(j serializer.TireJSON, currentUserID int) (ds.Ti
 		return ds.Tire{}, fmt.Errorf("%w: только модератор может создавать шины", ErrNotAllowed)
 	}
 
+	// Валидация полей
 	if j.TireTitle == "" {
 		return ds.Tire{}, fmt.Errorf("поле tire_title обязательно")
 	}
@@ -66,6 +71,8 @@ func (r *Repository) CreateTire(j serializer.TireJSON, currentUserID int) (ds.Ti
 	if j.Description == "" {
 		return ds.Tire{}, fmt.Errorf("поле description обязательно")
 	}
+
+	// Создание записи
 	t := serializer.TireFromJSON(j)
 	if err := r.db.Create(&t).Error; err != nil {
 		return ds.Tire{}, err
@@ -73,6 +80,7 @@ func (r *Repository) CreateTire(j serializer.TireJSON, currentUserID int) (ds.Ti
 	return t, nil
 }
 
+// UploadTirePhoto загружает фото шины в MinIO
 func (r *Repository) UploadTirePhoto(ctx context.Context, tireID int, file *multipart.FileHeader) (ds.Tire, error) {
 	t, err := r.GetTireByID(tireID)
 	if err != nil {
@@ -92,6 +100,7 @@ func (r *Repository) UploadTirePhoto(ctx context.Context, tireID int, file *mult
 	return *t, nil
 }
 
+// UploadTireVideo загружает видео шины в MinIO
 func (r *Repository) UploadTireVideo(ctx context.Context, tireID int, file *multipart.FileHeader) (ds.Tire, error) {
 	t, err := r.GetTireByID(tireID)
 	if err != nil {

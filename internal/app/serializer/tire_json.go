@@ -11,6 +11,8 @@ type TireJSON struct {
 	Photo                    string  `json:"photo"`
 	Video                    string  `json:"video"`
 	IsDelete                 bool    `json:"is_delete"`
+	// ✅ Новое поле в ответе API
+	ShortDescriptionEn       string  `json:"short_description_en,omitempty"`
 }
 
 func TireToJSON(t ds.Tire) TireJSON {
@@ -23,6 +25,8 @@ func TireToJSON(t ds.Tire) TireJSON {
 		Photo:                    t.Photo,
 		Video:                    t.Video,
 		IsDelete:                 t.IsDelete,
+		// ✅ Копируем новое поле
+		ShortDescriptionEn:       t.ShortDescriptionEn,
 	}
 }
 
@@ -35,5 +39,7 @@ func TireFromJSON(j TireJSON) ds.Tire {
 		Photo:                    j.Photo,
 		Video:                    j.Video,
 		IsDelete:                 j.IsDelete,
+		// ✅ Копируем новое поле
+		ShortDescriptionEn:       j.ShortDescriptionEn,
 	}
 }

@@ -1,3 +1,4 @@
+// internal/app/handler/tire.go
 package handler
 
 import (
@@ -15,17 +16,17 @@ import (
 
 // ─── HTML Pages ────────────────────────────────────────────────────────────
 
-// Index Главная страница со списком шин
+// Index — главная страница со списком шин
 // @Summary Главная страница (список шин)
 // @Tags tires-html
 // @Produce html
-// @Param query query string false "Поиск по названию шины"
+// @Param Title query string false "Поиск по названию шины"
 // @Success 200 {string} string "HTML-страница"
 // @Router /tires [get]
 func (h *Handler) Index(ctx *gin.Context) {
 	var tires []ds.Tire
 	var err error
-	searchQuery := ctx.Query("query")
+	searchQuery := ctx.Query("Title") // ✅ Параметр как на фронте
 
 	if searchQuery == "" {
 		tires, err = h.Repository.GetAllTires()
@@ -48,7 +49,7 @@ func (h *Handler) Index(ctx *gin.Context) {
 	})
 }
 
-// TirePage Страница одной шины
+// TirePage — страница одной шины
 // @Summary Страница шины по ID
 // @Tags tires-html
 // @Produce html
@@ -80,23 +81,28 @@ func (h *Handler) TirePage(ctx *gin.Context) {
 
 // ─── API: Tires ────────────────────────────────────────────────────────────
 
-// GetTires Список шин (API)
+// GetTires — список шин (API)
 // @Summary Список шин
 // @Tags tires
 // @Produce json
-// @Param query query string false "Поиск по названию шины"
+// @Param Title query string false "Поиск по названию шины"
 // @Success 200 {array} serializer.TireJSON
 // @Failure 500 {object} map[string]string
 // @Router /api/tires [get]
 func (h *Handler) GetTires(ctx *gin.Context) {
-	query := ctx.Query("query")
+	// ✅ Поддержка параметра Title (как шлёт фронтенд) + fallback на query
+	searchTitle := ctx.Query("Title")
+	if searchTitle == "" {
+		searchTitle = ctx.Query("query")
+	}
+
 	var tires []ds.Tire
 	var err error
 
-	if query == "" {
+	if searchTitle == "" {
 		tires, err = h.Repository.GetAllTires()
 	} else {
-		tires, err = h.Repository.SearchTiresByTitle(query)
+		tires, err = h.Repository.SearchTiresByTitle(searchTitle)
 	}
 
 	if err != nil {
@@ -104,6 +110,7 @@ func (h *Handler) GetTires(ctx *gin.Context) {
 		return
 	}
 
+	// ✅ Сериализация с полем short_description_en
 	resp := make([]serializer.TireJSON, 0, len(tires))
 	for _, t := range tires {
 		resp = append(resp, serializer.TireToJSON(t))
@@ -111,7 +118,7 @@ func (h *Handler) GetTires(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetTire Одна шина по ID (API)
+// GetTire — одна шина по ID (API)
 // @Summary Шина по ID
 // @Tags tires
 // @Produce json
@@ -135,10 +142,11 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 		}
 		return
 	}
+	// ✅ Возвращаем JSON с short_description_en
 	ctx.JSON(http.StatusOK, serializer.TireToJSON(*t))
 }
 
-// CreateTire Создание шины (только модератор)
+// CreateTire — создание шины (только модератор)
 // @Summary Создать шину
 // @Description multipart/form-data или application/json; только для модераторов
 // @Tags tires
@@ -148,6 +156,7 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 // @Param tire_material_coefficient formData number false "Коэффициент материала"
 // @Param tire_thickness_coefficient formData number false "Коэффициент толщины"
 // @Param description formData string false "Описание"
+// @Param short_description_en formData string false "Короткое описание на английском"
 // @Param photo formData file false "Фото шины"
 // @Param video formData file false "Видео шины"
 // @Success 201 {object} serializer.TireJSON
@@ -157,7 +166,6 @@ func (h *Handler) GetTire(ctx *gin.Context) {
 // @Security ApiKeyAuth
 // @Router /api/tires [post]
 func (h *Handler) CreateTire(ctx *gin.Context) {
-	// ✅ Получаем userID из контекста (мидлвар уже проверил токен)
 	uid, err := authUserIDUint(ctx)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusUnauthorized, err)
@@ -167,7 +175,6 @@ func (h *Handler) CreateTire(ctx *gin.Context) {
 	contentType := ctx.GetHeader("Content-Type")
 	var j serializer.TireJSON
 
-	// Поддержка и JSON, и form-data
 	if strings.HasPrefix(contentType, "application/json") {
 		if err := ctx.BindJSON(&j); err != nil {
 			h.errorHandler(ctx, http.StatusBadRequest, err)
@@ -181,17 +188,16 @@ func (h *Handler) CreateTire(ctx *gin.Context) {
 			TireMaterialCoefficient:  materialCoeff,
 			TireThicknessCoefficient: thicknessCoeff,
 			Description:              ctx.PostForm("description"),
+			ShortDescriptionEn:       ctx.PostForm("short_description_en"), // ✅ Поддержка нового поля
 		}
 	}
 
-	// ✅ Передаем userID в репозиторий для проверки прав модератора
 	t, err := h.Repository.CreateTire(j, int(uid))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
-	// Загрузка фото (если есть)
 	if photoFile, err := ctx.FormFile("photo"); err == nil && photoFile != nil {
 		updated, uploadErr := h.Repository.UploadTirePhoto(ctx, int(t.TireID), photoFile)
 		if uploadErr != nil {
@@ -201,7 +207,6 @@ func (h *Handler) CreateTire(ctx *gin.Context) {
 		t = updated
 	}
 
-	// Загрузка видео (если есть)
 	if videoFile, err := ctx.FormFile("video"); err == nil && videoFile != nil {
 		updated, uploadErr := h.Repository.UploadTireVideo(ctx, int(t.TireID), videoFile)
 		if uploadErr != nil {

@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	_ "metoda/docs"
-
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	_ "metoda/docs"
 	"metoda/internal/app/config"
 	"metoda/internal/app/dsn"
 	"metoda/internal/app/handler"

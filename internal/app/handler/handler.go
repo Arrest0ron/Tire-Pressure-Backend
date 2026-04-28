@@ -49,6 +49,9 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	api.POST("/users/signup", h.APISignUp)
 	api.POST("/users/signin", h.APISignIn)
 
+	// ✅ Иконка корзины — БЕЗ авторизации, всегда 200 (исправленный путь!)
+	api.GET("/tire_pressure/tire_pressure-cart", h.GetTirePressureCart)
+
 	// === ЗАЩИЩЁННЫЕ эндпоинты (требуется авторизация) ===
 	needAuth := api.Group("")
 	needAuth.Use(h.AuthMiddleware())
@@ -56,8 +59,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	// Выход из системы
 	needAuth.POST("/users/signout", h.APISignOut)
 
-	// Tire Pressure (черновики/заявки)
-	needAuth.GET("/tire-pressures/cart", h.GetTirePressureCart)
+	// Tire Pressure (черновики/заявки) — теперь без cart
 	needAuth.GET("/tire-pressures", h.GetTirePressures)
 	needAuth.GET("/tire-pressures/:id", h.GetTirePressure)
 	needAuth.PUT("/tire-pressures/:id", h.UpdateTirePressure)

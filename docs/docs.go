@@ -358,49 +358,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/tire-pressures/cart": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Если черновика нет — возвращает статус \"no_draft\".",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tire-pressures"
-                ],
-                "summary": "Корзина (черновик заявки)",
-                "responses": {
-                    "200": {
-                        "description": "CartJSON (tire_pressure_id, tires_count) или no_draft",
-                        "schema": {
-                            "$ref": "#/definitions/serializer.CartJSON"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/tire-pressures/{id}": {
             "get": {
                 "security": [
@@ -816,6 +773,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/tire_pressure/tire_pressure-cart": {
+            "get": {
+                "description": "Возвращает ID черновика и количество шин в нём. Работает без авторизации.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tire-pressures"
+                ],
+                "summary": "Иконка корзины",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/serializer.CartJSON"
+                        }
+                    }
+                }
+            }
+        },
         "/api/tires": {
             "get": {
                 "produces": [
@@ -829,7 +806,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Поиск по названию шины",
-                        "name": "query",
+                        "name": "Title",
                         "in": "query"
                     }
                 ],
@@ -894,6 +871,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Описание",
                         "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Короткое описание на английском",
+                        "name": "short_description_en",
                         "in": "formData"
                     },
                     {
@@ -1239,7 +1222,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Поиск по названию шины",
-                        "name": "query",
+                        "name": "Title",
                         "in": "query"
                     }
                 ],
@@ -1284,6 +1267,10 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "photo": {
+                    "type": "string"
+                },
+                "short_description_en": {
+                    "description": "✅ Новое поле в ответе API",
                     "type": "string"
                 },
                 "tire_id": {

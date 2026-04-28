@@ -20,6 +20,9 @@ definitions:
         type: boolean
       photo:
         type: string
+      short_description_en:
+        description: ✅ Новое поле в ответе API
+        type: string
       tire_id:
         type: integer
       tire_material_coefficient:
@@ -625,31 +628,17 @@ paths:
       summary: Оформить заявку
       tags:
       - tire-pressures
-  /api/tire-pressures/cart:
+  /api/tire_pressure/tire_pressure-cart:
     get:
-      description: Если черновика нет — возвращает статус "no_draft".
+      description: Возвращает ID черновика и количество шин в нём. Работает без авторизации.
       produces:
       - application/json
       responses:
         "200":
-          description: CartJSON (tire_pressure_id, tires_count) или no_draft
+          description: OK
           schema:
             $ref: '#/definitions/serializer.CartJSON'
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - ApiKeyAuth: []
-      summary: Корзина (черновик заявки)
+      summary: Иконка корзины
       tags:
       - tire-pressures
   /api/tires:
@@ -657,7 +646,7 @@ paths:
       parameters:
       - description: Поиск по названию шины
         in: query
-        name: query
+        name: Title
         type: string
       produces:
       - application/json
@@ -697,6 +686,10 @@ paths:
       - description: Описание
         in: formData
         name: description
+        type: string
+      - description: Короткое описание на английском
+        in: formData
+        name: short_description_en
         type: string
       - description: Фото шины
         in: formData
@@ -922,7 +915,7 @@ paths:
       parameters:
       - description: Поиск по названию шины
         in: query
-        name: query
+        name: Title
         type: string
       produces:
       - text/html

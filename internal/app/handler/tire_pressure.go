@@ -71,37 +71,28 @@ func (h *Handler) TirePressurePage(ctx *gin.Context) {
 }
 
 // ─── API: Tire Pressures ───────────────────────────────────────────────────
-
-// GetTirePressureCart Корзина (черновик заявки)
-// @Summary Корзина (черновик заявки)
-// @Description Если черновика нет — возвращает статус "no_draft".
+// GetTirePressureCart — иконка корзины (без авторизации, всегда 200)
+// @Summary Иконка корзины
+// @Description Возвращает ID черновика и количество шин в нём. Работает без авторизации.
 // @Tags tire-pressures
 // @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} serializer.CartJSON "CartJSON (tire_pressure_id, tires_count) или no_draft"
-// @Failure 401 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/tire-pressures/cart [get]
+// @Success 200 {object} serializer.CartJSON
+// @Router /api/tire_pressure/tire_pressure-cart [get]
 func (h *Handler) GetTirePressureCart(ctx *gin.Context) {
 	uid, err := authUserIDUint(ctx)
-	if err != nil {
-		h.errorHandler(ctx, http.StatusUnauthorized, err)
-		return
+
+	var cartID uint
+	var count int64
+
+	if err == nil && uid > 0 {
+		// Пользователь авторизован — получаем его корзину
+		cartID, count, _ = h.Repository.GetCartInfo(uid)
 	}
-	id, count, err := h.Repository.GetCartInfo(uid)
-	if err != nil {
-		h.errorHandler(ctx, http.StatusInternalServerError, err)
-		return
-	}
-	if id == 0 {
-		ctx.JSON(http.StatusOK, gin.H{
-			"status":      "no_draft",
-			"tires_count": 0,
-		})
-		return
-	}
+	// Если не авторизован оставляем (0, 0)
+
+	// 200
 	ctx.JSON(http.StatusOK, serializer.CartJSON{
-		TirePressureID: id,
+		TirePressureID: cartID,
 		TiresCount:     count,
 	})
 }

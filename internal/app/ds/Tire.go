@@ -9,6 +9,5 @@ type Tire struct {
 	TireMaterialCoefficient  float64 `gorm:"not null"`
 	TireThicknessCoefficient float64 `gorm:"not null"`
 	IsDelete                 bool    `gorm:"type:boolean;not null;default:false"`
+	ShortDescriptionEn       string  `gorm:"type:varchar(150);default:null"`
 }
-
-// Done
