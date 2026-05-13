@@ -209,28 +209,46 @@ func (r *Repository) GetTirePressureByID(id int) (ds.TirePressure, error) {
 }
 
 // GetAllTirePressures — с фильтром по правам доступа
+// ✅ Теперь возвращает и черновики (чтобы они отображались в списке заявок)
 func (r *Repository) GetAllTirePressures(from, to time.Time, status string, viewerID uint, isModerator bool) ([]ds.TirePressure, error) {
 	var list []ds.TirePressure
-	sub := r.db.Where("status != ? AND status != ?", ds.StatusDeleted, ds.StatusDraft)
+
+	// 🔹 Базовый запрос: исключаем только удалённые заявки
+	// ✅ Убрали исключение черновиков (ds.StatusDraft) — теперь они попадают в список
+	sub := r.db.Where("status != ?", ds.StatusDeleted)
+
+	// 🔹 Фильтр по владельцу (если не модератор)
 	if !isModerator {
 		sub = sub.Where("creator_id = ?", viewerID)
 	}
-	if !from.IsZero() {
-		sub = sub.Where("date_formed >= ?", from)
+
+	// 🔹 Фильтр по дате формирования
+	// ✅ Черновики (date_formed IS NULL) всегда проходят фильтр дат
+	// ✅ Если даты заданы — показываем: черновики ИЛИ заявки в диапазоне
+	if !from.IsZero() && !to.IsZero() {
+		sub = sub.Where("date_formed IS NULL OR (date_formed >= ? AND date_formed <= ?)",
+			from, to.Add(24*time.Hour))
+	} else if !from.IsZero() {
+		sub = sub.Where("date_formed IS NULL OR date_formed >= ?", from)
+	} else if !to.IsZero() {
+		sub = sub.Where("date_formed IS NULL OR date_formed <= ?", to.Add(24*time.Hour))
 	}
-	if !to.IsZero() {
-		sub = sub.Where("date_formed <= ?", to.Add(24*time.Hour))
-	}
+	// Если обе даты пустые — показываем всё (включая черновики)
+
+	// 🔹 Фильтр по статусу
+	// ✅ Если статус не указан — показываем все статусы, включая "черновик"
+	// ✅ Если статус указан "черновик" — показываем только черновики
+	// ✅ Если статус указан другой — показываем только его (черновики отсеются)
 	if status != "" {
 		sub = sub.Where("status = ?", status)
 	}
-	err := sub.Order("tire_pressure_id").Find(&list).Error
+
+	err := sub.Order("tire_pressure_id DESC").Find(&list).Error
 	if err != nil {
 		return nil, err
 	}
 	return list, nil
 }
-
 func (r *Repository) GetTirePressureEntriesAPI(id uint) ([]serializer.TirePressureEntryViewJSON, error) {
 	var items []ds.TirePressureEntry
 	err := r.db.Where("tire_pressure_id = ?", id).Preload("Tire").Order("id").Find(&items).Error

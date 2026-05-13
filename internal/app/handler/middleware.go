@@ -94,15 +94,29 @@ func (h *Handler) RequireModerator() gin.HandlerFunc {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 func authUserIDUint(ctx *gin.Context) (uint, error) {
-	v, ok := ctx.Get(ctxUserID)
-	if !ok {
-		return 0, errors.New("нет user_id в контексте")
+	// 🔹 1. Сначала пробуем взять из контекста (если мидлварь сработал)
+	v, ok := ctx.Get(ctxUserID)  // ctxUserID = "auth_user_id"
+	if ok {
+		if id, ok := v.(uint); ok && id > 0 {
+			return id, nil
+		}
 	}
-	id, ok := v.(uint)
-	if !ok || id == 0 {
-		return 0, errors.New("неверный user_id")
+
+	// 🔹 2. Если не нашли — парсим токен из заголовка напрямую
+	// (для публичных эндпоинтов, которые хотят знать пользователя)
+	tokenString := extractJWT(ctx.Request)  // ✅ Используем существующую функцию!
+	if tokenString != "" {
+		claims, err := auth.ParseAndValidateToken(tokenString)
+		if err == nil {
+			uid, err := auth.UserIDFromClaims(claims)
+			if err == nil && uid > 0 {
+				return uid, nil  // ✅ Нашли user_id в токене!
+			}
+		}
 	}
-	return id, nil
+
+	// 🔹 3. Если всё ещё не нашли — возвращаем ошибку
+	return 0, errors.New("нет user_id в контексте")
 }
 
 func isModeratorFromCtx(ctx *gin.Context) bool {

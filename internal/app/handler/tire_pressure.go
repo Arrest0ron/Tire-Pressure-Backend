@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -79,18 +80,32 @@ func (h *Handler) TirePressurePage(ctx *gin.Context) {
 // @Success 200 {object} serializer.CartJSON
 // @Router /api/tire_pressure/tire_pressure-cart [get]
 func (h *Handler) GetTirePressureCart(ctx *gin.Context) {
+	// 🔥 Логируем начало запроса
+	log.Printf("🔍 [GetTirePressureCart] Запрос корзины")
+
+	// 🔥 Логируем заголовки (для отладки авторизации)
+	authHeader := ctx.GetHeader("Authorization")
+	log.Printf("🔍 [GetTirePressureCart] Authorization header: '%s'", authHeader)
+
+	// 🔥 Вызываем функцию авторизации и логируем результат
 	uid, err := authUserIDUint(ctx)
+	log.Printf("🔍 [GetTirePressureCart] authUserIDUint → uid=%d, err=%v", uid, err)
 
 	var cartID uint
 	var count int64
 
 	if err == nil && uid > 0 {
-		// Пользователь авторизован — получаем его корзину
-		cartID, count, _ = h.Repository.GetCartInfo(uid)
-	}
-	// Если не авторизован оставляем (0, 0)
+		log.Printf("🔍 [GetTirePressureCart] ✅ Пользователь авторизован (uid=%d), вызываю GetCartInfo...", uid)
 
-	// 200
+		cartID, count, err = h.Repository.GetCartInfo(uid)
+		log.Printf("🔍 [GetTirePressureCart] GetCartInfo(%d) → cartID=%d, count=%d, err=%v", uid, cartID, count, err)
+	} else {
+		log.Printf("🔍 [GetTirePressureCart] ❌ Не авторизован (err=%v, uid=%d) → возвращаю гостевую корзину", err, uid)
+	}
+
+	// 🔥 Логируем итоговый ответ
+	log.Printf("🔍 [GetTirePressureCart] 📤 Ответ: {tire_pressure_id:%d, tires_count:%d}", cartID, count)
+
 	ctx.JSON(http.StatusOK, serializer.CartJSON{
 		TirePressureID: cartID,
 		TiresCount:     count,

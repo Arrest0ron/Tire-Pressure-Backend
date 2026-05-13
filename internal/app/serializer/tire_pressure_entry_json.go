@@ -7,5 +7,4 @@ type CoatingCoefficientUpdateJSON struct {
 type TirePressureEntryUpdateJSON struct {
 	CoatingCoefficient float64 `json:"coating_coefficient"`
 	Pressure           float64 `json:"pressure"`
-	Direction          string  `json:"direction,omitempty"`
 }
